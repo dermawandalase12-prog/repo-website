@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profil Saya - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Penghuni</small>
+        </div>
+        <div id="penghuniSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="penghuniSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="penghuniSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="penghuniTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Profil Saya</h4>
+          <div class="row g-4">
+            <div class="col-lg-4">
+              <div class="card text-center">
+                <div class="card-body" id="profileAvatar"></div>
+              </div>
+            </div>
+            <div class="col-lg-8">
+              <div class="card">
+                <div class="card-body">
+                  <div id="profilAlert" class="d-none"></div>
+                  <form id="profilForm" novalidate>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Nama</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="pfNama"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Username</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="pfUsername"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Email</label
+                        ><input
+                          type="email"
+                          class="form-control"
+                          id="pfEmail"
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Nomor HP</label
+                        ><input type="tel" class="form-control" id="pfHP" />
+                      </div>
+                      <div class="col-12">
+                        <label class="form-label">Alamat Asal</label
+                        ><textarea
+                          class="form-control"
+                          id="pfAlamat"
+                          rows="2"
+                        ></textarea>
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Kamar</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="pfKamar"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Lantai</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="pfLantai"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Kategori</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="pfKategori"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Tanggal Bergabung</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="pfTanggal"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Status</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="pfStatus"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                    <div class="mt-3">
+                      <button type="submit" class="btn btn-primary">
+                        Simpan Perubahan
+                      </button>
+                      <p class="small text-muted mb-0 mt-2">
+                        Penghuni hanya dapat mengubah informasi pribadi. Kamar,
+                        lantai, kategori, kontrak, dan status pembayaran
+                        dikelola admin.
+                      </p>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="pfToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="pfToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/penghuni.js"></script>
+    <script>
+      (function () {
+        var tenant = null;
+        var user = null;
+        function toast(msg) {
+          document.getElementById("pfToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(
+            document.getElementById("pfToast"),
+          ).show();
+        }
+        function renderAvatar() {
+          var el = document.getElementById("profileAvatar");
+          var foto = user.fotoProfil
+            ? PenghuniApp.imgPath(user.fotoProfil)
+            : "";
+          el.innerHTML =
+            (foto
+              ? '<img src="' +
+                PenghuniApp.escapeHtml(foto) +
+                '" class="rounded-circle object-fit-cover mb-2" style="width:100px;height:100px" alt="Foto profil">'
+              : '<div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width:100px;height:100px;font-size:2.5rem">' +
+                PenghuniApp.escapeHtml(user.nama.charAt(0)) +
+                "</div>") +
+            '<h5 class="mb-1">' +
+            PenghuniApp.escapeHtml(tenant.nama) +
+            "</h5>" +
+            '<p class="text-muted small mb-2">' +
+            PenghuniApp.escapeHtml(user.username) +
+            "</p>" +
+            '<label class="btn btn-sm btn-outline-primary mb-0">Ganti Foto<input type="file" id="pfFotoInput" accept="image/*" hidden></label>';
+          var input = document.getElementById("pfFotoInput");
+          input.addEventListener("change", function () {
+            var file = input.files[0];
+            if (!file) return;
+            if (file.size > 2 * 1024 * 1024) {
+              toast("Ukuran foto maksimal 2MB.", "text-bg-danger");
+              return;
+            }
+            var reader = new FileReader();
+            reader.onload = function (ev) {
+              var img = new Image();
+              img.onload = function () {
+                var ratio = Math.min(1, 400 / Math.max(img.width, img.height));
+                var canvas = document.createElement("canvas");
+                canvas.width = Math.round(img.width * ratio);
+                canvas.height = Math.round(img.height * ratio);
+                canvas
+                  .getContext("2d")
+                  .drawImage(img, 0, 0, canvas.width, canvas.height);
+                var dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+                var users = DB.getUsers();
+                var idx = users.findIndex(function (u) {
+                  return u.id === user.id;
+                });
+                users[idx].fotoProfil = dataUrl;
+                if (DB.saveUsers(users)) {
+                  user = users[idx];
+                  renderAvatar();
+                  toast("Foto profil diperbarui.");
+                } else {
+                  toast("Gagal menyimpan foto.", "text-bg-danger");
+                }
+              };
+              img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+          });
+        }
+        function loadForm() {
+          document.getElementById("pfNama").value = tenant.nama;
+          document.getElementById("pfUsername").value = user.username;
+          document.getElementById("pfEmail").value = tenant.email || "";
+          document.getElementById("pfHP").value = tenant.nomorHP || "";
+          document.getElementById("pfAlamat").value = tenant.alamatAsal || "";
+          var room = DB.getRoomById(tenant.roomId);
+          document.getElementById("pfKamar").value = room
+            ? room.nomorKamar
+            : "-";
+          document.getElementById("pfLantai").value = room
+            ? "Lantai " + room.lantai
+            : "-";
+          document.getElementById("pfKategori").value = tenant.kategori;
+          document.getElementById("pfTanggal").value = DB.formatDate(
+            tenant.tanggalMasuk,
+          );
+          document.getElementById("pfStatus").value = tenant.status;
+        }
+        document
+          .getElementById("profilForm")
+          .addEventListener("submit", function (e) {
+            e.preventDefault();
+            var alertBox = document.getElementById("profilAlert");
+            alertBox.classList.add("d-none");
+            var tenants = DB.getTenants();
+            var idx = tenants.findIndex(function (t) {
+              return t.id === tenant.id;
+            });
+            tenants[idx].email = document
+              .getElementById("pfEmail")
+              .value.trim();
+            tenants[idx].nomorHP = document.getElementById("pfHP").value.trim();
+            tenants[idx].alamatAsal = document
+              .getElementById("pfAlamat")
+              .value.trim();
+            var users = DB.getUsers();
+            var uidx = users.findIndex(function (u) {
+              return u.id === user.id;
+            });
+            users[uidx].email = tenants[idx].email;
+            users[uidx].nomorHP = tenants[idx].nomorHP;
+            if (DB.saveTenants(tenants) && DB.saveUsers(users)) {
+              tenant = tenants[idx];
+              user = users[uidx];
+              toast("Profil disimpan.");
+            } else {
+              alertBox.className = "alert alert-danger";
+              alertBox.textContent = "Gagal menyimpan.";
+              alertBox.classList.remove("d-none");
+            }
+          });
+        document.addEventListener("DOMContentLoaded", function () {
+          tenant = PenghuniApp.initPenghuniPage("profil.html", "Profil Saya");
+          user = PenghuniApp.getCurrentUser();
+          if (tenant && user) {
+            renderAvatar();
+            loadForm();
+          }
+        });
+      })();
+    </script>
+  </body>
+</html>

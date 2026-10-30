@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pengumuman - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Penghuni</small>
+        </div>
+        <div id="penghuniSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="penghuniSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="penghuniSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="penghuniTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Pengumuman</h4>
+          <div class="mb-3">
+            <input
+              type="text"
+              class="form-control form-control-sm"
+              id="pmSearch"
+              placeholder="Cari pengumuman..."
+              style="max-width: 300px"
+            />
+          </div>
+          <div id="pmList"></div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/penghuni.js"></script>
+    <script>
+      (function () {
+        var tenant = null;
+        function render() {
+          var s = document.getElementById("pmSearch").value.toLowerCase();
+          var list = DB.getAnnouncements()
+            .filter(function (a) {
+              if (a.status !== "Publik") return false;
+              if (
+                a.targetPenghuni !== "Semua" &&
+                a.targetPenghuni !== tenant.kategori
+              )
+                return false;
+              if (s && a.judul.toLowerCase().indexOf(s) === -1) return false;
+              return true;
+            })
+            .sort(function (a, b) {
+              return (
+                new Date(b.tanggalPublikasi) - new Date(a.tanggalPublikasi)
+              );
+            });
+          var wrap = document.getElementById("pmList");
+          if (!list.length) {
+            wrap.innerHTML =
+              '<div class="alert alert-info">Belum ada pengumuman.</div>';
+            return;
+          }
+          var h = "";
+          list.forEach(function (a) {
+            h +=
+              '<div class="card mb-3"><div class="card-body">' +
+              '<div class="d-flex justify-content-between"><h5 class="card-title">' +
+              PenghuniApp.escapeHtml(a.judul) +
+              '</h5><span class="badge bg-primary">' +
+              PenghuniApp.escapeHtml(a.kategori) +
+              "</span></div>" +
+              '<p class="small text-muted mb-2">' +
+              DB.formatDate(a.tanggalPublikasi) +
+              " · Target: " +
+              PenghuniApp.escapeHtml(a.targetPenghuni) +
+              "</p>" +
+              '<p class="mb-0">' +
+              PenghuniApp.escapeHtml(a.isi) +
+              "</p>" +
+              "</div></div>";
+          });
+          wrap.innerHTML = h;
+        }
+        document.getElementById("pmSearch").addEventListener("input", render);
+        document.addEventListener("DOMContentLoaded", function () {
+          tenant = PenghuniApp.initPenghuniPage(
+            "pengumuman.html",
+            "Pengumuman",
+          );
+          if (tenant) render();
+        });
+      })();
+    </script>
+  </body>
+</html>

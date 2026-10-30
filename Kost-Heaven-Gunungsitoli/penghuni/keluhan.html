@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Keluhan & Laporan - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Penghuni</small>
+        </div>
+        <div id="penghuniSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="penghuniSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="penghuniSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="penghuniTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Keluhan & Laporan</h4>
+          <div class="row g-4">
+            <div class="col-lg-5">
+              <div class="card">
+                <div class="card-header fw-bold">Kirim Keluhan</div>
+                <div class="card-body">
+                  <div id="klAlert" class="d-none"></div>
+                  <form id="klForm" novalidate>
+                    <div class="mb-2">
+                      <label class="form-label">Kategori</label>
+                      <select class="form-select" id="klKategori">
+                        <option value="Fasilitas">Fasilitas</option>
+                        <option value="Kebersihan">Kebersihan</option>
+                        <option value="Keamanan">Keamanan</option>
+                        <option value="Lainnya">Lainnya</option>
+                      </select>
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label">Judul *</label
+                      ><input
+                        type="text"
+                        class="form-control"
+                        id="klJudul"
+                        required
+                      />
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label">Deskripsi *</label
+                      ><textarea
+                        class="form-control"
+                        id="klDeskripsi"
+                        rows="3"
+                        required
+                      ></textarea>
+                    </div>
+                    <div class="mb-2">
+                      <label class="form-label">Foto (opsional)</label
+                      ><input
+                        type="file"
+                        class="form-control"
+                        id="klFoto"
+                        accept="image/*"
+                      />
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                      Kirim Keluhan
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-7">
+              <div class="card">
+                <div class="card-header fw-bold">Riwayat Keluhan</div>
+                <div class="card-body" id="klRiwayat"></div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="klToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="klToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/penghuni.js"></script>
+    <script>
+      (function () {
+        var tenant = null;
+        function toast(msg) {
+          document.getElementById("klToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(
+            document.getElementById("klToast"),
+          ).show();
+        }
+        function renderRiwayat() {
+          var list = DB.getComplaintsByTenant(tenant.id)
+            .slice()
+            .sort(function (a, b) {
+              return new Date(b.tanggalLaporan) - new Date(a.tanggalLaporan);
+            });
+          var wrap = document.getElementById("klRiwayat");
+          if (!list.length) {
+            wrap.innerHTML =
+              '<p class="text-muted mb-0">Belum ada keluhan.</p>';
+            return;
+          }
+          var h = "";
+          list.forEach(function (c) {
+            var badge =
+              c.status === "Selesai"
+                ? "bg-success"
+                : c.status === "Ditolak"
+                  ? "bg-danger"
+                  : c.status === "Diproses"
+                    ? "bg-info text-dark"
+                    : "bg-warning text-dark";
+            h +=
+              '<div class="border rounded p-3 mb-2"><div class="d-flex justify-content-between"><strong>' +
+              PenghuniApp.escapeHtml(c.judul) +
+              '</strong><span class="badge ' +
+              badge +
+              '">' +
+              PenghuniApp.escapeHtml(c.status) +
+              "</span></div>" +
+              '<p class="small text-muted mb-1">' +
+              PenghuniApp.escapeHtml(c.kategori) +
+              " · " +
+              DB.formatDate(c.tanggalLaporan) +
+              "</p>" +
+              '<p class="mb-1">' +
+              PenghuniApp.escapeHtml(c.deskripsi) +
+              "</p>" +
+              (c.foto
+                ? '<img src="' +
+                  PenghuniApp.escapeHtml(c.foto) +
+                  '" class="img-fluid rounded-3 mb-2" style="max-height:150px" alt="Foto keluhan">'
+                : "") +
+              (c.tanggapanAdmin
+                ? '<div class="alert alert-info mb-0 mt-2"><strong>Tanggapan:</strong> ' +
+                  PenghuniApp.escapeHtml(c.tanggapanAdmin) +
+                  "</div>"
+                : "") +
+              "</div>";
+          });
+          wrap.innerHTML = h;
+        }
+        document
+          .getElementById("klForm")
+          .addEventListener("submit", function (e) {
+            e.preventDefault();
+            var alertBox = document.getElementById("klAlert");
+            alertBox.classList.add("d-none");
+            var judul = document.getElementById("klJudul").value.trim();
+            var deskripsi = document.getElementById("klDeskripsi").value.trim();
+            if (!judul || !deskripsi) {
+              alertBox.className = "alert alert-danger";
+              alertBox.textContent = "Judul dan deskripsi wajib diisi.";
+              alertBox.classList.remove("d-none");
+              return;
+            }
+            var fileInput = document.getElementById("klFoto");
+            var file = fileInput.files[0];
+            function save(fotoData) {
+              var list = DB.getComplaints();
+              var newId = DB.generateId("KEL");
+              list.push({
+                id: newId,
+                tenantId: tenant.id,
+                roomId: tenant.roomId,
+                kategori: document.getElementById("klKategori").value,
+                judul: judul,
+                deskripsi: deskripsi,
+                foto: fotoData,
+                tanggalLaporan: new Date().toISOString(),
+                status: "Menunggu",
+                tanggapanAdmin: "",
+                tanggalTanggapan: "",
+              });
+              if (!DB.saveComplaints(list)) {
+                alertBox.className = "alert alert-danger";
+                alertBox.textContent = "Gagal menyimpan.";
+                alertBox.classList.remove("d-none");
+                return;
+              }
+              Auth.notifyAdmin(
+                "Keluhan Baru",
+                tenant.nama + ": " + judul,
+                "keluhan",
+                newId,
+                "keluhan.html",
+              );
+              document.getElementById("klForm").reset();
+              toast("Keluhan terkirim.");
+              renderRiwayat();
+            }
+            if (file) {
+              if (file.size > 1024 * 1024) {
+                alertBox.className = "alert alert-danger";
+                alertBox.textContent = "Ukuran foto maksimal 1MB.";
+                alertBox.classList.remove("d-none");
+                return;
+              }
+              var reader = new FileReader();
+              reader.onload = function (ev) {
+                var img = new Image();
+                img.onload = function () {
+                  var ratio = Math.min(
+                    1,
+                    800 / Math.max(img.width, img.height),
+                  );
+                  var canvas = document.createElement("canvas");
+                  canvas.width = Math.round(img.width * ratio);
+                  canvas.height = Math.round(img.height * ratio);
+                  canvas
+                    .getContext("2d")
+                    .drawImage(img, 0, 0, canvas.width, canvas.height);
+                  save(canvas.toDataURL("image/jpeg", 0.7));
+                };
+                img.src = ev.target.result;
+              };
+              reader.readAsDataURL(file);
+            } else {
+              save("");
+            }
+          });
+        document.addEventListener("DOMContentLoaded", function () {
+          tenant = PenghuniApp.initPenghuniPage(
+            "keluhan.html",
+            "Keluhan & Laporan",
+          );
+          if (tenant) renderRiwayat();
+        });
+      })();
+    </script>
+  </body>
+</html>

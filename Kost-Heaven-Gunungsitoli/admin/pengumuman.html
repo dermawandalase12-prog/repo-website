@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pengumuman - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Pengumuman</h4>
+            <button class="btn btn-primary btn-sm" id="anAddBtn">
+              Tambah Pengumuman
+            </button>
+          </div>
+          <div id="anList"></div>
+        </main>
+      </div>
+    </div>
+
+    <div class="modal fade" id="anModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="anModalTitle">Tambah Pengumuman</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="anAlert" class="d-none"></div>
+            <input type="hidden" id="anId" />
+            <div class="mb-2">
+              <label class="form-label">Judul *</label
+              ><input type="text" class="form-control" id="anJudul" required />
+            </div>
+            <div class="row g-2 mb-2">
+              <div class="col-md-6">
+                <label class="form-label">Kategori</label
+                ><input
+                  type="text"
+                  class="form-control"
+                  id="anKategori"
+                  value="Umum"
+                />
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Target</label>
+                <select class="form-select" id="anTarget">
+                  <option value="Semua">Semua</option>
+                  <option value="Putra">Putra</option>
+                  <option value="Putri">Putri</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Isi *</label
+              ><textarea
+                class="form-control"
+                id="anIsi"
+                rows="4"
+                required
+              ></textarea>
+            </div>
+            <div class="mb-2">
+              <label class="form-label">Status</label>
+              <select class="form-select" id="anStatus">
+                <option value="Publik">Publik</option>
+                <option value="Draft">Draft</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Batal
+            </button>
+            <button type="button" class="btn btn-primary" id="anSaveBtn">
+              Simpan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="anToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="anToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      (function () {
+        function toast(msg, cls) {
+          var el = document.getElementById("anToast");
+          el.className =
+            "toast align-items-center border-0 " + (cls || "text-bg-success");
+          document.getElementById("anToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(el).show();
+        }
+        function render() {
+          var list = DB.getAnnouncements()
+            .slice()
+            .sort(function (a, b) {
+              return (
+                new Date(b.tanggalPublikasi) - new Date(a.tanggalPublikasi)
+              );
+            });
+          var wrap = document.getElementById("anList");
+          if (!list.length) {
+            wrap.innerHTML =
+              '<div class="alert alert-info">Belum ada pengumuman.</div>';
+            return;
+          }
+          var h =
+            '<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Judul</th><th>Kategori</th><th>Target</th><th>Tanggal</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
+          list.forEach(function (a) {
+            var badge = a.status === "Publik" ? "bg-success" : "bg-secondary";
+            h +=
+              "<tr><td>" +
+              AdminApp.escapeHtml(a.judul) +
+              "</td><td>" +
+              AdminApp.escapeHtml(a.kategori) +
+              "</td><td>" +
+              AdminApp.escapeHtml(a.targetPenghuni) +
+              '</td><td class="small">' +
+              DB.formatDateShort(a.tanggalPublikasi) +
+              '</td><td><span class="badge ' +
+              badge +
+              '">' +
+              AdminApp.escapeHtml(a.status) +
+              '</span></td><td><button class="btn btn-sm btn-outline-primary btn-edit" data-id="' +
+              AdminApp.escapeHtml(a.id) +
+              '">Edit</button> <button class="btn btn-sm btn-outline-danger btn-del" data-id="' +
+              AdminApp.escapeHtml(a.id) +
+              '">Hapus</button></td></tr>';
+          });
+          h += "</tbody></table></div></div>";
+          wrap.innerHTML = h;
+          wrap.querySelectorAll(".btn-edit").forEach(function (b) {
+            b.addEventListener("click", function () {
+              openEdit(b.getAttribute("data-id"));
+            });
+          });
+          wrap.querySelectorAll(".btn-del").forEach(function (b) {
+            b.addEventListener("click", function () {
+              if (!confirm("Hapus pengumuman ini?")) return;
+              var all = DB.getAnnouncements();
+              var idx = all.findIndex(function (x) {
+                return x.id === b.getAttribute("data-id");
+              });
+              all.splice(idx, 1);
+              DB.saveAnnouncements(all);
+              toast("Pengumuman dihapus.", "text-bg-danger");
+              render();
+            });
+          });
+        }
+        function openEdit(id) {
+          var all = DB.getAnnouncements();
+          var a = all.find(function (x) {
+            return x.id === id;
+          });
+          if (!a) return;
+          document.getElementById("anModalTitle").textContent =
+            "Edit Pengumuman";
+          document.getElementById("anId").value = a.id;
+          document.getElementById("anJudul").value = a.judul;
+          document.getElementById("anKategori").value = a.kategori;
+          document.getElementById("anTarget").value = a.targetPenghuni;
+          document.getElementById("anIsi").value = a.isi;
+          document.getElementById("anStatus").value = a.status;
+          document.getElementById("anAlert").classList.add("d-none");
+          bootstrap.Modal.getOrCreateInstance(
+            document.getElementById("anModal"),
+          ).show();
+        }
+        document
+          .getElementById("anAddBtn")
+          .addEventListener("click", function () {
+            document.getElementById("anModalTitle").textContent =
+              "Tambah Pengumuman";
+            document.getElementById("anId").value = "";
+            document.getElementById("anJudul").value = "";
+            document.getElementById("anKategori").value = "Umum";
+            document.getElementById("anTarget").value = "Semua";
+            document.getElementById("anIsi").value = "";
+            document.getElementById("anStatus").value = "Publik";
+            document.getElementById("anAlert").classList.add("d-none");
+            bootstrap.Modal.getOrCreateInstance(
+              document.getElementById("anModal"),
+            ).show();
+          });
+        document
+          .getElementById("anSaveBtn")
+          .addEventListener("click", function () {
+            var alertBox = document.getElementById("anAlert");
+            alertBox.classList.add("d-none");
+            var id = document.getElementById("anId").value;
+            var judul = document.getElementById("anJudul").value.trim();
+            var isi = document.getElementById("anIsi").value.trim();
+            if (!judul || !isi) {
+              alertBox.className = "alert alert-danger";
+              alertBox.textContent = "Judul dan isi wajib diisi.";
+              alertBox.classList.remove("d-none");
+              return;
+            }
+            var all = DB.getAnnouncements();
+            var data = {
+              id: id || DB.generateId("ANN"),
+              judul: judul,
+              kategori:
+                document.getElementById("anKategori").value.trim() || "Umum",
+              isi: isi,
+              targetPenghuni: document.getElementById("anTarget").value,
+              tanggalPublikasi: new Date().toISOString(),
+              status: document.getElementById("anStatus").value,
+              createdBy: "USR-ADMIN",
+            };
+            if (id) {
+              var idx = all.findIndex(function (x) {
+                return x.id === id;
+              });
+              all[idx] = data;
+            } else {
+              all.push(data);
+            }
+            if (!DB.saveAnnouncements(all)) {
+              alertBox.className = "alert alert-danger";
+              alertBox.textContent = "Gagal menyimpan.";
+              alertBox.classList.remove("d-none");
+              return;
+            }
+            if (data.status === "Publik") {
+              var tenants = DB.getTenants().filter(function (t) {
+                return (
+                  t.status === "Aktif" &&
+                  (data.targetPenghuni === "Semua" ||
+                    data.targetPenghuni === t.kategori)
+                );
+              });
+              tenants.forEach(function (t) {
+                Auth.notifyTenant(
+                  t.id,
+                  "Pengumuman Baru",
+                  data.judul,
+                  "pengumuman",
+                  data.id,
+                  "pengumuman.html",
+                );
+              });
+            }
+            bootstrap.Modal.getInstance(
+              document.getElementById("anModal"),
+            ).hide();
+            toast("Pengumuman disimpan.");
+            render();
+          });
+        document.addEventListener("DOMContentLoaded", function () {
+          AdminApp.initAdminPage("pengumuman.html", "Pengumuman");
+          render();
+        });
+      })();
+    </script>
+  </body>
+</html>

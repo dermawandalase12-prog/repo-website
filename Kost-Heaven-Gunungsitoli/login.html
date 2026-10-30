@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - Kost-Heaven-Gunungsitoli</title>
+    <link rel="stylesheet" href="bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div
+      class="container min-vh-100 d-flex align-items-center justify-content-center py-5"
+    >
+      <div class="card shadow-sm w-100">
+        <div class="card-body p-4">
+          <div class="text-center mb-4">
+            <h3 class="fw-bold text-primary">Kost-Heaven</h3>
+            <p class="text-muted mb-0">Gunungsitoli</p>
+          </div>
+          <div id="loginAlert" class="d-none"></div>
+          <form id="loginForm" novalidate>
+            <div class="mb-3">
+              <label for="loginUsername" class="form-label">Username</label>
+              <input
+                type="text"
+                class="form-control"
+                id="loginUsername"
+                required
+                autocomplete="username"
+              />
+            </div>
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Password</label>
+              <div class="input-group">
+                <input
+                  type="password"
+                  class="form-control"
+                  id="loginPassword"
+                  required
+                  autocomplete="current-password"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="togglePassword"
+                >
+                  Tampilkan
+                </button>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Masuk</button>
+          </form>
+          <hr />
+          <div class="text-center mt-3">
+            <a href="index.html" class="text-decoration-none"
+              >&larr; Kembali ke Beranda</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        Auth.redirectIfLoggedIn();
+
+        var form = document.getElementById("loginForm");
+        var alertBox = document.getElementById("loginAlert");
+        var passInput = document.getElementById("loginPassword");
+        var toggleBtn = document.getElementById("togglePassword");
+
+        toggleBtn.addEventListener("click", function () {
+          if (passInput.type === "password") {
+            passInput.type = "text";
+            toggleBtn.textContent = "Sembunyikan";
+          } else {
+            passInput.type = "password";
+            toggleBtn.textContent = "Tampilkan";
+          }
+        });
+
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var username = document.getElementById("loginUsername").value.trim();
+          var password = passInput.value;
+          alertBox.classList.add("d-none");
+          if (!username || !password) {
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent = "Username dan password wajib diisi.";
+            alertBox.classList.remove("d-none");
+            return;
+          }
+          var result = Auth.login(username, password);
+          if (!result.success) {
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent = result.message;
+            alertBox.classList.remove("d-none");
+            return;
+          }
+          if (result.user.role === "admin") {
+            window.location.href = "admin/dashboard.html";
+          } else {
+            window.location.href = "penghuni/dashboard.html";
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

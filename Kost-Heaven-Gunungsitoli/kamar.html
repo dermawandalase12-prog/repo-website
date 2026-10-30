@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kamar - Kost-Heaven-Gunungsitoli</title>
+    <link rel="stylesheet" href="bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="index.html">Kost-Heaven</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Beranda</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="kamar.html">Kamar</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="tentang.html">Tentang</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="kontak.html">Kontak</a>
+            </li>
+          </ul>
+          <div class="d-flex gap-2 align-items-center">
+            <a
+              href="login.html"
+              id="navLogin"
+              class="btn btn-outline-light btn-sm"
+              >Login</a
+            >
+            <a href="#" id="navDashboard" class="btn btn-warning btn-sm d-none"
+              >Dashboard</a
+            >
+            <div id="navUserMenu" class="dropdown d-none">
+              <button
+                class="btn btn-outline-light btn-sm dropdown-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+              >
+                <span id="navUserName">User</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <span
+                    class="dropdown-item-text small text-muted"
+                    id="navUserRole"
+                  ></span>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="#" id="navLogoutBtn">Logout</a>
+                </li>
+              </ul>
+            </div>
+            <a
+              href="pendaftaran.html"
+              class="btn btn-light btn-sm text-primary fw-bold"
+              >Daftar Kost</a
+            >
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+        </ol>
+      </nav>
+      <h1>Kamar Kost-Heaven</h1>
+      <p class="text-muted">
+        Kost-Heaven menyediakan 12 kamar yang terbagi menjadi dua lantai. Lantai
+        pertama dikhususkan bagi penghuni laki-laki, sedangkan lantai kedua
+        dikhususkan bagi penghuni perempuan.
+      </p>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card border-primary">
+            <div class="card-body">
+              <h6 class="text-primary">Lantai 1 — Putra</h6>
+              <p class="mb-0 small">K01, K02, K03, K04, K05, K06</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border-primary">
+            <div class="card-body">
+              <h6 class="text-primary">Lantai 2 — Putri</h6>
+              <p class="mb-0 small">K07, K08, K09, K10, K11, K12</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card border-success">
+            <div class="card-body">
+              <h6 class="text-success">Harga Awal</h6>
+              <p class="mb-0 small">Rp4.000.000 / tahun untuk seluruh kamar</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <label for="filterSearch" class="form-label small"
+                >Cari Nomor</label
+              >
+              <input
+                type="text"
+                class="form-control form-control-sm"
+                id="filterSearch"
+              />
+            </div>
+            <div class="col-md-2">
+              <label for="filterLantai" class="form-label small">Lantai</label>
+              <select class="form-select form-select-sm" id="filterLantai">
+                <option value="">Semua</option>
+                <option value="1">Lantai 1</option>
+                <option value="2">Lantai 2</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <label for="filterKategori" class="form-label small"
+                >Kategori</label
+              >
+              <select class="form-select form-select-sm" id="filterKategori">
+                <option value="">Semua</option>
+                <option value="Putra">Putra</option>
+                <option value="Putri">Putri</option>
+              </select>
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+              <button
+                class="btn btn-outline-secondary btn-sm w-100"
+                id="resetFilter"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+          <div class="mt-2 d-flex flex-wrap gap-2">
+            <button class="btn btn-sm btn-outline-primary" id="quickPutra">
+              Putra
+            </button>
+            <button class="btn btn-sm btn-outline-primary" id="quickPutri">
+              Putri
+            </button>
+            <button class="btn btn-sm btn-outline-primary" id="quickLantai1">
+              Lantai 1
+            </button>
+            <button class="btn btn-sm btn-outline-primary" id="quickLantai2">
+              Lantai 2
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div
+        id="roomGrid"
+        class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4"
+      ></div>
+    </div>
+
+    <div id="siteFooter"></div>
+
+    <div
+      class="modal fade"
+      id="roomDetailModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              Detail Kamar <span id="detailNomor"></span>
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Tutup"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <img
+                  id="detailFoto"
+                  src=""
+                  alt="Foto kamar"
+                  class="img-fluid rounded-3 mb-2"
+                />
+                <span id="detailStatusBadge" class="badge bg-secondary">-</span>
+              </div>
+              <div class="col-md-6">
+                <dl class="row mb-0">
+                  <dt class="col-5">Lantai</dt>
+                  <dd class="col-7" id="detailLantai"></dd>
+                  <dt class="col-5">Kategori</dt>
+                  <dd class="col-7" id="detailKategori"></dd>
+                  <dt class="col-5">Tipe</dt>
+                  <dd class="col-7" id="detailTipe"></dd>
+                  <dt class="col-5">Harga</dt>
+                  <dd class="col-7 text-primary fw-bold" id="detailHarga"></dd>
+                  <dt class="col-5">Status</dt>
+                  <dd class="col-7" id="detailStatus"></dd>
+                </dl>
+              </div>
+            </div>
+            <hr />
+            <h6>Fasilitas</h6>
+            <ul
+              id="detailFasilitas"
+              class="list-group list-group-flush mb-3"
+            ></ul>
+            <h6>Deskripsi</h6>
+            <p id="detailDeskripsi" class="text-muted"></p>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Tutup
+            </button>
+            <a id="detailDaftarBtn" href="#" class="btn btn-primary"
+              >Ajukan Pendaftaran</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/public.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var params = new URLSearchParams(window.location.search);
+        var kat = params.get("kategori");
+        var lantai = params.get("lantai");
+        if (kat) document.getElementById("filterKategori").value = kat;
+        if (lantai) document.getElementById("filterLantai").value = lantai;
+        if (kat || lantai) Public.renderPublicRooms();
+      });
+    </script>
+  </body>
+</html>

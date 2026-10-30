@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Dashboard Admin - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <div id="adminContent"></div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        AdminApp.initAdminPage("dashboard.html", "Dashboard");
+        AdminApp.renderDashboard();
+      });
+    </script>
+  </body>
+</html>

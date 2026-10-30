@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Laporan Keuangan - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Laporan Keuangan</h4>
+          <div id="lpContent"></div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      (function () {
+        function render() {
+          var payments = DB.getPayments().filter(function (p) {
+            return p.status === "Lunas";
+          });
+          var bills = DB.getBills();
+          var expenses = DB.getExpenses();
+
+          var incomeTotal = payments.reduce(function (s, p) {
+            return s + Number(p.nominalTransfer || 0);
+          }, 0);
+          var expenseTotal = expenses.reduce(function (s, e) {
+            return s + Number(e.nominal || 0);
+          }, 0);
+          var unpaid = bills.filter(function (b) {
+            return b.status !== "Lunas";
+          });
+          var unpaidTotal = unpaid.reduce(function (s, b) {
+            return s + Number(b.nominal || 0);
+          }, 0);
+
+          var now = new Date();
+          var monthPayments = payments.filter(function (p) {
+            var d = new Date(p.tanggalUpload);
+            return (
+              d.getMonth() === now.getMonth() &&
+              d.getFullYear() === now.getFullYear()
+            );
+          });
+          var monthIncome = monthPayments.reduce(function (s, p) {
+            return s + Number(p.nominalTransfer || 0);
+          }, 0);
+          var yearPayments = payments.filter(function (p) {
+            return (
+              new Date(p.tanggalUpload).getFullYear() === now.getFullYear()
+            );
+          });
+          var yearIncome = yearPayments.reduce(function (s, p) {
+            return s + Number(p.nominalTransfer || 0);
+          }, 0);
+
+          var h =
+            '<div class="d-flex justify-content-end mb-3"><button class="btn btn-outline-primary btn-sm" onclick="window.print()">Cetak Laporan</button></div>';
+          h +=
+            '<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-3 mb-4">';
+          var cards = [
+            {
+              label: "Pendapatan Bulan Ini",
+              value: DB.formatRupiah(monthIncome),
+              color: "success",
+            },
+            {
+              label: "Pendapatan Tahun Ini",
+              value: DB.formatRupiah(yearIncome),
+              color: "success",
+            },
+            {
+              label: "Total Pendapatan (Lunas)",
+              value: DB.formatRupiah(incomeTotal),
+              color: "primary",
+            },
+            {
+              label: "Tagihan Belum Lunas",
+              value: DB.formatRupiah(unpaidTotal),
+              color: "warning",
+            },
+            {
+              label: "Total Pengeluaran",
+              value: DB.formatRupiah(expenseTotal),
+              color: "danger",
+            },
+            {
+              label: "Saldo Bersih",
+              value: DB.formatRupiah(incomeTotal - expenseTotal),
+              color: "primary",
+            },
+          ];
+          cards.forEach(function (c) {
+            h +=
+              '<div class="col"><div class="card border-' +
+              c.color +
+              '"><div class="card-body"><p class="text-muted small mb-1">' +
+              c.label +
+              '</p><h5 class="mb-0 text-' +
+              c.color +
+              '">' +
+              c.value +
+              "</h5></div></div></div>";
+          });
+          h += "</div>";
+
+          h +=
+            '<div class="card mb-4"><div class="card-header fw-bold">Detail Pembayaran Lunas</div><div class="card-body">';
+          if (!payments.length)
+            h += '<p class="text-muted mb-0">Belum ada pembayaran lunas.</p>';
+          else {
+            h +=
+              '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>ID</th><th>Penghuni</th><th>Nominal</th><th>Tanggal</th></tr></thead><tbody>';
+            payments.forEach(function (p) {
+              var t = DB.getTenantById(p.tenantId);
+              h +=
+                '<tr><td class="small">' +
+                AdminApp.escapeHtml(p.id) +
+                "</td><td>" +
+                AdminApp.escapeHtml(t ? t.nama : "-") +
+                "</td><td>" +
+                DB.formatRupiah(p.nominalTransfer) +
+                "</td><td>" +
+                DB.formatDateShort(p.tanggalUpload) +
+                "</td></tr>";
+            });
+            h += "</tbody></table></div>";
+          }
+          h += "</div></div>";
+
+          h +=
+            '<div class="card mb-4"><div class="card-header fw-bold">Pengeluaran</div><div class="card-body">';
+          if (!expenses.length)
+            h += '<p class="text-muted mb-0">Belum ada pengeluaran.</p>';
+          else {
+            h +=
+              '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>ID</th><th>Keterangan</th><th>Nominal</th><th>Tanggal</th></tr></thead><tbody>';
+            expenses.forEach(function (e) {
+              h +=
+                '<tr><td class="small">' +
+                AdminApp.escapeHtml(e.id) +
+                "</td><td>" +
+                AdminApp.escapeHtml(e.keterangan) +
+                "</td><td>" +
+                DB.formatRupiah(e.nominal) +
+                "</td><td>" +
+                DB.formatDateShort(e.tanggal) +
+                "</td></tr>";
+            });
+            h += "</tbody></table></div>";
+          }
+          h += "</div></div>";
+
+          h +=
+            '<div class="card"><div class="card-header fw-bold">Tagihan Belum Lunas</div><div class="card-body">';
+          if (!unpaid.length)
+            h += '<p class="text-muted mb-0">Tidak ada tagihan tertunda.</p>';
+          else {
+            h +=
+              '<div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>ID</th><th>Penghuni</th><th>Periode</th><th>Nominal</th><th>Status</th></tr></thead><tbody>';
+            unpaid.forEach(function (b) {
+              var t = DB.getTenantById(b.tenantId);
+              h +=
+                '<tr><td class="small">' +
+                AdminApp.escapeHtml(b.id) +
+                "</td><td>" +
+                AdminApp.escapeHtml(t ? t.nama : "-") +
+                "</td><td>" +
+                AdminApp.escapeHtml(b.periode) +
+                "</td><td>" +
+                DB.formatRupiah(b.nominal) +
+                "</td><td>" +
+                AdminApp.escapeHtml(b.status) +
+                "</td></tr>";
+            });
+            h += "</tbody></table></div>";
+          }
+          h += "</div></div>";
+
+          document.getElementById("lpContent").innerHTML = h;
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+          AdminApp.initAdminPage("laporan.html", "Laporan Keuangan");
+          render();
+        });
+      })();
+    </script>
+  </body>
+</html>

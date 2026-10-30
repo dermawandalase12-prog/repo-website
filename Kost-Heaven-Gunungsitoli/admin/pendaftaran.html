@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pendaftaran - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Pendaftaran Masuk</h4>
+          <ul class="nav nav-tabs mb-3" id="regTabs">
+            <li class="nav-item">
+              <button class="nav-link active" data-tab="all">Semua</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-tab="Menunggu Persetujuan">
+                Menunggu
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-tab="Diterima">Diterima</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-tab="Ditolak">Ditolak</button>
+            </li>
+          </ul>
+          <div id="regList"></div>
+        </main>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="regDetailModal"
+      tabindex="-1"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detail Pendaftaran</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body" id="regDetailBody"></div>
+          <div class="modal-footer" id="regDetailFooter"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="regToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="regToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      (function () {
+        var activeTab = "all";
+        function toast(msg) {
+          document.getElementById("regToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(
+            document.getElementById("regToast"),
+          ).show();
+        }
+        function render() {
+          var regs = DB.getRegistrations();
+          if (activeTab !== "all")
+            regs = regs.filter(function (r) {
+              return r.status === activeTab;
+            });
+          regs.sort(function (a, b) {
+            return (
+              new Date(b.tanggalPendaftaran) - new Date(a.tanggalPendaftaran)
+            );
+          });
+          var wrap = document.getElementById("regList");
+          if (!regs.length) {
+            wrap.innerHTML =
+              '<div class="alert alert-warning">Tidak ada data.</div>';
+            return;
+          }
+          var h =
+            '<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr>' +
+            "<th>ID</th><th>Nama</th><th>Kategori</th><th>Kontak</th><th>Kamar</th><th>Lantai</th><th>Tanggal</th><th>Status</th><th>Aksi</th>" +
+            "</tr></thead><tbody>";
+          regs.forEach(function (r) {
+            var room = DB.getRoomById(r.roomId);
+            var badge =
+              r.status === "Diterima"
+                ? "bg-success"
+                : r.status === "Ditolak"
+                  ? "bg-danger"
+                  : "bg-warning text-dark";
+            h +=
+              "<tr>" +
+              '<td class="small">' +
+              AdminApp.escapeHtml(r.id) +
+              "</td>" +
+              "<td>" +
+              AdminApp.escapeHtml(r.nama) +
+              "</td>" +
+              "<td>" +
+              AdminApp.escapeHtml(r.kategori) +
+              "</td>" +
+              '<td class="small">' +
+              AdminApp.escapeHtml(r.nomorHP || "-") +
+              "<br>" +
+              AdminApp.escapeHtml(r.email || "-") +
+              "</td>" +
+              "<td>" +
+              AdminApp.escapeHtml(room ? room.nomorKamar : "-") +
+              "</td>" +
+              "<td>" +
+              (room ? room.lantai : "-") +
+              "</td>" +
+              '<td class="small">' +
+              DB.formatDateShort(r.tanggalPendaftaran) +
+              "</td>" +
+              '<td><span class="badge ' +
+              badge +
+              '">' +
+              AdminApp.escapeHtml(r.status) +
+              "</span></td>" +
+              '<td><button class="btn btn-sm btn-outline-primary btn-detail" data-id="' +
+              AdminApp.escapeHtml(r.id) +
+              '">Detail</button></td>' +
+              "</tr>";
+          });
+          h += "</tbody></table></div></div>";
+          wrap.innerHTML = h;
+          wrap.querySelectorAll(".btn-detail").forEach(function (b) {
+            b.addEventListener("click", function () {
+              openDetail(b.getAttribute("data-id"));
+            });
+          });
+        }
+        function openDetail(id) {
+          var reg = DB.getRegistrations().find(function (r) {
+            return r.id === id;
+          });
+          if (!reg) return;
+          var room = DB.getRoomById(reg.roomId);
+          var body = document.getElementById("regDetailBody");
+          var footer = document.getElementById("regDetailFooter");
+          body.innerHTML =
+            '<dl class="row mb-0">' +
+            '<dt class="col-sm-4">ID</dt><dd class="col-sm-8">' +
+            AdminApp.escapeHtml(reg.id) +
+            "</dd>" +
+            '<dt class="col-sm-4">Nama</dt><dd class="col-sm-8">' +
+            AdminApp.escapeHtml(reg.nama) +
+            "</dd>" +
+            '<dt class="col-sm-4">Kategori</dt><dd class="col-sm-8">' +
+            AdminApp.escapeHtml(reg.kategori) +
+            "</dd>" +
+            '<dt class="col-sm-4">Kamar Pilihan</dt><dd class="col-sm-8">' +
+            AdminApp.escapeHtml(
+              room ? room.nomorKamar + " (Lantai " + room.lantai + ")" : "-",
+            ) +
+            "</dd>" +
+            '<dt class="col-sm-4">Kontak</dt><dd class="col-sm-8">' +
+            AdminApp.escapeHtml(reg.nomorHP || "-") +
+            "<br>" +
+            AdminApp.escapeHtml(reg.email || "-") +
+            "</dd>" +
+            '<dt class="col-sm-4">Alamat</dt><dd class="col-sm-8">' +
+            AdminApp.escapeHtml(reg.alamatAsal || "-") +
+            "</dd>" +
+            '<dt class="col-sm-4">Tanggal Daftar</dt><dd class="col-sm-8">' +
+            DB.formatDate(reg.tanggalPendaftaran) +
+            "</dd>" +
+            '<dt class="col-sm-4">Rencana Masuk</dt><dd class="col-sm-8">' +
+            (reg.tanggalRencanaMasuk
+              ? DB.formatDate(reg.tanggalRencanaMasuk)
+              : "-") +
+            "</dd>" +
+            '<dt class="col-sm-4">Catatan</dt><dd class="col-sm-8">' +
+            AdminApp.escapeHtml(reg.catatan || "-") +
+            "</dd>" +
+            '<dt class="col-sm-4">Status</dt><dd class="col-sm-8">' +
+            AdminApp.escapeHtml(reg.status) +
+            "</dd>" +
+            (reg.alasanPenolakan
+              ? '<dt class="col-sm-4">Alasan Tolak</dt><dd class="col-sm-8">' +
+                AdminApp.escapeHtml(reg.alasanPenolakan) +
+                "</dd>"
+              : "") +
+            "</dl>";
+          footer.innerHTML =
+            '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>';
+          if (reg.status === "Menunggu Persetujuan") {
+            footer.innerHTML +=
+              '<button type="button" class="btn btn-danger" id="regRejectBtn">Tolak</button>' +
+              '<button type="button" class="btn btn-success" id="regApproveBtn">Terima & Aktifkan</button>';
+            document
+              .getElementById("regApproveBtn")
+              .addEventListener("click", function () {
+                approve(reg);
+              });
+            document
+              .getElementById("regRejectBtn")
+              .addEventListener("click", function () {
+                reject(reg);
+              });
+          }
+          bootstrap.Modal.getOrCreateInstance(
+            document.getElementById("regDetailModal"),
+          ).show();
+        }
+        function approve(reg) {
+          var room = DB.getRoomById(reg.roomId);
+          if (!room) {
+            alert("Kamar tidak ditemukan.");
+            return;
+          }
+          if (room.kategori !== reg.kategori) {
+            alert("Kategori tidak sesuai.");
+            return;
+          }
+          if ((room.tenantIds || []).length >= room.kapasitas) {
+            alert("Kamar penuh.");
+            return;
+          }
+
+          var tenants = DB.getTenants();
+          var users = DB.getUsers();
+          var rooms = DB.getRooms();
+          var newTenantId = DB.generateId("TEN");
+          var newUserId = DB.generateId("USR");
+          var uname = reg.nama.replace(/\s+/g, "");
+          var baseUname = uname;
+          var i = 1;
+          while (
+            users.some(function (u) {
+              return u.username === uname;
+            })
+          ) {
+            uname = baseUname + i;
+            i++;
+          }
+          users.push({
+            id: newUserId,
+            username: uname,
+            password: "penghuni123",
+            role: "penghuni",
+            nama: reg.nama,
+            email: reg.email,
+            nomorHP: reg.nomorHP,
+            fotoProfil: "",
+          });
+          DB.saveUsers(users);
+
+          tenants.push({
+            id: newTenantId,
+            userId: newUserId,
+            nama: reg.nama,
+            kategori: reg.kategori,
+            email: reg.email,
+            nomorHP: reg.nomorHP,
+            alamatAsal: reg.alamatAsal,
+            fotoProfil: "",
+            roomId: reg.roomId,
+            tanggalMasuk: DB.todayISO(),
+            status: "Aktif",
+          });
+          DB.saveTenants(tenants);
+
+          var rm = rooms.find(function (r) {
+            return r.id === reg.roomId;
+          });
+          if (!rm.tenantIds) rm.tenantIds = [];
+          rm.tenantIds.push(newTenantId);
+          rm.status = "Terisi";
+          DB.saveRooms(rooms);
+
+          var contracts = DB.getContracts();
+          contracts.push({
+            id: DB.generateId("KTR"),
+            tenantId: newTenantId,
+            roomId: reg.roomId,
+            tanggalMulai: DB.todayISO(),
+            tanggalBerakhir: DB.addYears(DB.todayISO(), 1),
+            durasi: 12,
+            hargaSewa: rm.hargaTahunan,
+            status: "Aktif",
+          });
+          DB.saveContracts(contracts);
+
+          var bills = DB.getBills();
+          bills.push({
+            id: DB.generateId("BILL"),
+            tenantId: newTenantId,
+            roomId: reg.roomId,
+            contractId: contracts[contracts.length - 1].id,
+            periode: new Date().getFullYear().toString(),
+            jenisTagihan: "Sewa Tahunan",
+            nominal: rm.hargaTahunan,
+            tanggalTerbit: DB.todayISO(),
+            jatuhTempo: DB.addMonths(DB.todayISO(), 1),
+            status: "Belum Lunas",
+          });
+          DB.saveBills(bills);
+
+          var regs = DB.getRegistrations();
+          var idx = regs.findIndex(function (r) {
+            return r.id === reg.id;
+          });
+          regs[idx].status = "Diterima";
+          DB.saveRegistrations(regs);
+
+          Auth.notifyTenant(
+            newTenantId,
+            "Pendaftaran Diterima",
+            "Selamat! Pendaftaran Anda diterima. Akun login: " +
+              uname +
+              " / penghuni123",
+            "pendaftaran",
+            reg.id,
+            "profil.html",
+          );
+
+          bootstrap.Modal.getInstance(
+            document.getElementById("regDetailModal"),
+          ).hide();
+          toast("Pendaftaran diterima dan penghuni diaktifkan.");
+          render();
+        }
+        function reject(reg) {
+          var alasan = prompt("Alasan penolakan:");
+          if (!alasan) return;
+          var regs = DB.getRegistrations();
+          var idx = regs.findIndex(function (r) {
+            return r.id === reg.id;
+          });
+          regs[idx].status = "Ditolak";
+          regs[idx].alasanPenolakan = alasan;
+          DB.saveRegistrations(regs);
+          bootstrap.Modal.getInstance(
+            document.getElementById("regDetailModal"),
+          ).hide();
+          toast("Pendaftaran ditolak.");
+          render();
+        }
+        document.querySelectorAll("#regTabs button").forEach(function (b) {
+          b.addEventListener("click", function () {
+            document.querySelectorAll("#regTabs button").forEach(function (x) {
+              x.classList.remove("active");
+            });
+            b.classList.add("active");
+            activeTab = b.getAttribute("data-tab");
+            render();
+          });
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+          AdminApp.initAdminPage("pendaftaran.html", "Pendaftaran");
+          render();
+        });
+      })();
+    </script>
+  </body>
+</html>

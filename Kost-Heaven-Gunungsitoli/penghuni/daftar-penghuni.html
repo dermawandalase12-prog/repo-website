@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Daftar Penghuni - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Penghuni</small>
+        </div>
+        <div id="penghuniSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="penghuniSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="penghuniSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="penghuniTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Daftar Penghuni</h4>
+          <div class="mb-3">
+            <select
+              class="form-select form-select-sm"
+              id="dpFilter"
+              style="max-width: 200px"
+            >
+              <option value="">Semua Lantai</option>
+              <option value="1">Lantai 1</option>
+              <option value="2">Lantai 2</option>
+            </select>
+          </div>
+          <div id="dpList"></div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/penghuni.js"></script>
+    <script>
+      (function () {
+        function render() {
+          var lantai = document.getElementById("dpFilter").value;
+          var tenants = DB.getTenants().filter(function (t) {
+            return t.status === "Aktif";
+          });
+          if (lantai)
+            tenants = tenants.filter(function (t) {
+              var r = DB.getRoomById(t.roomId);
+              return r && String(r.lantai) === lantai;
+            });
+          var wrap = document.getElementById("dpList");
+          if (!tenants.length) {
+            wrap.innerHTML =
+              '<div class="alert alert-warning">Tidak ada penghuni.</div>';
+            return;
+          }
+          var h =
+            '<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">';
+          tenants.forEach(function (t) {
+            var room = DB.getRoomById(t.roomId);
+            var foto = t.fotoProfil ? PenghuniApp.imgPath(t.fotoProfil) : "";
+            var initial = t.nama.charAt(0).toUpperCase();
+            h +=
+              '<div class="col"><div class="card h-100"><div class="card-body text-center">' +
+              (foto
+                ? '<img src="' +
+                  PenghuniApp.escapeHtml(foto) +
+                  '" class="rounded-circle object-fit-cover mb-2" style="width:64px;height:64px" alt="' +
+                  PenghuniApp.escapeHtml(t.nama) +
+                  '">'
+                : '<div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width:64px;height:64px;font-size:1.5rem">' +
+                  PenghuniApp.escapeHtml(initial) +
+                  "</div>") +
+              '<h6 class="mb-1">' +
+              PenghuniApp.escapeHtml(t.nama) +
+              "</h6>" +
+              '<p class="text-muted small mb-1">Kamar ' +
+              PenghuniApp.escapeHtml(room ? room.nomorKamar : "-") +
+              " · Lantai " +
+              (room ? room.lantai : "-") +
+              "</p>" +
+              '<span class="badge bg-success">' +
+              PenghuniApp.escapeHtml(t.status) +
+              "</span>" +
+              "</div></div></div>";
+          });
+          h += "</div>";
+          wrap.innerHTML = h;
+        }
+        document.getElementById("dpFilter").addEventListener("change", render);
+        document.addEventListener("DOMContentLoaded", function () {
+          var t = PenghuniApp.initPenghuniPage(
+            "daftar-penghuni.html",
+            "Daftar Penghuni",
+          );
+          if (t) render();
+        });
+      })();
+    </script>
+  </body>
+</html>

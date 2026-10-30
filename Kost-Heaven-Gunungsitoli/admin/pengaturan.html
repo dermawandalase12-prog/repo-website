@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pengaturan Kost - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Pengaturan Kost</h4>
+          <div class="card">
+            <div class="card-body">
+              <div id="stAlert" class="d-none"></div>
+              <form id="stForm" novalidate>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Nama Kost</label
+                    ><input type="text" class="form-control" id="stNama" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Alamat</label
+                    ><input type="text" class="form-control" id="stAlamat" />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Deskripsi</label
+                    ><textarea
+                      class="form-control"
+                      id="stDeskripsi"
+                      rows="2"
+                    ></textarea>
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Telepon</label
+                    ><input type="tel" class="form-control" id="stTelepon" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">WhatsApp</label
+                    ><input type="tel" class="form-control" id="stWhatsapp" />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Email</label
+                    ><input type="email" class="form-control" id="stEmail" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Jam Pelayanan</label
+                    ><input type="text" class="form-control" id="stJam" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Google Maps URL</label
+                    ><input type="text" class="form-control" id="stMaps" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Nama Bank</label
+                    ><input type="text" class="form-control" id="stBank" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">No. Rekening</label
+                    ><input type="text" class="form-control" id="stRekening" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Atas Nama</label
+                    ><input type="text" class="form-control" id="stAtasNama" />
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Referensi Foto Utama</label
+                    ><input type="text" class="form-control" id="stFoto" />
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Fasilitas Umum</label
+                    ><textarea
+                      class="form-control"
+                      id="stFasilitas"
+                      rows="2"
+                    ></textarea>
+                  </div>
+                  <div class="col-12">
+                    <label class="form-label">Peraturan Kost</label
+                    ><textarea
+                      class="form-control"
+                      id="stPeraturan"
+                      rows="3"
+                    ></textarea>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">
+                  Simpan Pengaturan
+                </button>
+              </form>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="stToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="stToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        AdminApp.initAdminPage("pengaturan.html", "Pengaturan Kost");
+        var s = DB.getSettings();
+        document.getElementById("stNama").value = s.namaKost || "";
+        document.getElementById("stAlamat").value = s.alamat || "";
+        document.getElementById("stDeskripsi").value = s.deskripsi || "";
+        document.getElementById("stTelepon").value = s.telepon || "";
+        document.getElementById("stWhatsapp").value = s.whatsapp || "";
+        document.getElementById("stEmail").value = s.email || "";
+        document.getElementById("stJam").value = s.jamPelayanan || "";
+        document.getElementById("stMaps").value = s.googleMaps || "";
+        document.getElementById("stBank").value = s.namaBank || "";
+        document.getElementById("stRekening").value = s.nomorRekening || "";
+        document.getElementById("stAtasNama").value =
+          s.namaPemilikRekening || "";
+        document.getElementById("stFoto").value = s.fotoUtama || "";
+        document.getElementById("stFasilitas").value = s.fasilitasUmum || "";
+        document.getElementById("stPeraturan").value = s.peraturan || "";
+
+        document
+          .getElementById("stForm")
+          .addEventListener("submit", function (e) {
+            e.preventDefault();
+            var set = DB.getSettings();
+            set.namaKost = document.getElementById("stNama").value.trim();
+            set.alamat = document.getElementById("stAlamat").value.trim();
+            set.deskripsi = document.getElementById("stDeskripsi").value.trim();
+            set.telepon = document.getElementById("stTelepon").value.trim();
+            set.whatsapp = document.getElementById("stWhatsapp").value.trim();
+            set.email = document.getElementById("stEmail").value.trim();
+            set.jamPelayanan = document.getElementById("stJam").value.trim();
+            set.googleMaps = document.getElementById("stMaps").value.trim();
+            set.namaBank = document.getElementById("stBank").value.trim();
+            set.nomorRekening = document
+              .getElementById("stRekening")
+              .value.trim();
+            set.namaPemilikRekening = document
+              .getElementById("stAtasNama")
+              .value.trim();
+            set.fotoUtama = document.getElementById("stFoto").value.trim();
+            set.fasilitasUmum = document
+              .getElementById("stFasilitas")
+              .value.trim();
+            set.peraturan = document.getElementById("stPeraturan").value.trim();
+            if (DB.saveSettings(set)) {
+              document.getElementById("stToastBody").textContent =
+                "Pengaturan disimpan.";
+              bootstrap.Toast.getOrCreateInstance(
+                document.getElementById("stToast"),
+              ).show();
+            } else {
+              var a = document.getElementById("stAlert");
+              a.className = "alert alert-danger";
+              a.textContent = "Gagal menyimpan.";
+              a.classList.remove("d-none");
+            }
+          });
+      });
+    </script>
+  </body>
+</html>

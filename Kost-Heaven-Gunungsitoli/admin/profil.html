@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profil Admin - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Profil Admin</h4>
+          <div class="row g-4">
+            <div class="col-lg-4">
+              <div class="card text-center">
+                <div class="card-body" id="apAvatar"></div>
+              </div>
+            </div>
+            <div class="col-lg-8">
+              <div class="card">
+                <div class="card-body">
+                  <div id="apAlert" class="d-none"></div>
+                  <form id="apForm" novalidate>
+                    <div class="row g-3">
+                      <div class="col-md-6">
+                        <label class="form-label">Nama</label
+                        ><input type="text" class="form-control" id="apName" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Username</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="apUsername"
+                          readonly
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Email</label
+                        ><input
+                          type="email"
+                          class="form-control"
+                          id="apEmail"
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Telepon</label
+                        ><input type="tel" class="form-control" id="apPhone" />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Jabatan</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="apJabatan"
+                        />
+                      </div>
+                      <div class="col-md-6">
+                        <label class="form-label">Role</label
+                        ><input
+                          type="text"
+                          class="form-control"
+                          id="apRole"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">
+                      Simpan
+                    </button>
+                    <button
+                      type="button"
+                      class="btn btn-outline-danger mt-3"
+                      id="apLogout"
+                    >
+                      Logout
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="apToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="apToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      (function () {
+        var user = null;
+        function renderAvatar() {
+          var el = document.getElementById("apAvatar");
+          var foto = user.fotoProfil
+            ? user.fotoProfil.indexOf("images/") === 0
+              ? "../" + user.fotoProfil
+              : user.fotoProfil
+            : "";
+          el.innerHTML =
+            (foto
+              ? '<img src="' +
+                AdminApp.escapeHtml(foto) +
+                '" class="rounded-circle object-fit-cover mb-2" style="width:100px;height:100px" alt="Foto admin">'
+              : '<div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center mb-2" style="width:100px;height:100px;font-size:2.5rem">A</div>') +
+            '<h5 class="mb-1">' +
+            AdminApp.escapeHtml(user.nama) +
+            "</h5>" +
+            '<p class="text-muted small mb-2">' +
+            AdminApp.escapeHtml(user.username) +
+            "</p>" +
+            '<label class="btn btn-sm btn-outline-primary mb-0">Ganti Foto<input type="file" id="apFotoInput" accept="image/*" hidden></label>';
+          document
+            .getElementById("apFotoInput")
+            .addEventListener("change", function () {
+              var f = this.files[0];
+              if (!f) return;
+              var r = new FileReader();
+              r.onload = function (ev) {
+                var img = new Image();
+                img.onload = function () {
+                  var ratio = Math.min(
+                    1,
+                    400 / Math.max(img.width, img.height),
+                  );
+                  var c = document.createElement("canvas");
+                  c.width = Math.round(img.width * ratio);
+                  c.height = Math.round(img.height * ratio);
+                  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+                  var data = c.toDataURL("image/jpeg", 0.8);
+                  var users = DB.getUsers();
+                  var idx = users.findIndex(function (u) {
+                    return u.id === user.id;
+                  });
+                  users[idx].fotoProfil = data;
+                  if (DB.saveUsers(users)) {
+                    user = users[idx];
+                    renderAvatar();
+                    document.getElementById("apToastBody").textContent =
+                      "Foto diperbarui.";
+                    bootstrap.Toast.getOrCreateInstance(
+                      document.getElementById("apToast"),
+                    ).show();
+                  }
+                };
+                img.src = ev.target.result;
+              };
+              r.readAsDataURL(f);
+            });
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+          AdminApp.initAdminPage("profil.html", "Profil Admin");
+          user = Auth.currentUser();
+          if (!user) return;
+          renderAvatar();
+          document.getElementById("apName").value = user.nama || "";
+          document.getElementById("apUsername").value = user.username || "";
+          document.getElementById("apEmail").value = user.email || "";
+          document.getElementById("apPhone").value = user.nomorHP || "";
+          document.getElementById("apJabatan").value = user.jabatan || "";
+          document.getElementById("apRole").value = user.role || "admin";
+
+          document
+            .getElementById("apForm")
+            .addEventListener("submit", function (e) {
+              e.preventDefault();
+              var users = DB.getUsers();
+              var idx = users.findIndex(function (u) {
+                return u.id === user.id;
+              });
+              users[idx].nama = document.getElementById("apName").value.trim();
+              users[idx].email = document
+                .getElementById("apEmail")
+                .value.trim();
+              users[idx].nomorHP = document
+                .getElementById("apPhone")
+                .value.trim();
+              users[idx].jabatan = document
+                .getElementById("apJabatan")
+                .value.trim();
+              if (DB.saveUsers(users)) {
+                user = users[idx];
+                document.getElementById("apToastBody").textContent =
+                  "Profil disimpan.";
+                bootstrap.Toast.getOrCreateInstance(
+                  document.getElementById("apToast"),
+                ).show();
+              }
+            });
+          document
+            .getElementById("apLogout")
+            .addEventListener("click", function () {
+              Auth.logout();
+            });
+        });
+      })();
+    </script>
+  </body>
+</html>

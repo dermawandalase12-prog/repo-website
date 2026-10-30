@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Keluhan Penghuni - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Keluhan Penghuni</h4>
+          <div id="klList"></div>
+        </main>
+      </div>
+    </div>
+
+    <div class="modal fade" id="klDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detail Keluhan</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body" id="klDetailBody"></div>
+          <div class="modal-footer" id="klDetailFooter"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="klToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="klToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      (function () {
+        function toast(msg) {
+          document.getElementById("klToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(
+            document.getElementById("klToast"),
+          ).show();
+        }
+        function render() {
+          var list = DB.getComplaints()
+            .slice()
+            .sort(function (a, b) {
+              return new Date(b.tanggalLaporan) - new Date(a.tanggalLaporan);
+            });
+          var wrap = document.getElementById("klList");
+          if (!list.length) {
+            wrap.innerHTML =
+              '<div class="alert alert-info">Belum ada keluhan.</div>';
+            return;
+          }
+          var h =
+            '<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Penghuni</th><th>Kamar</th><th>Judul</th><th>Kategori</th><th>Tanggal</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
+          list.forEach(function (c) {
+            var t = DB.getTenantById(c.tenantId);
+            var room = DB.getRoomById(c.roomId);
+            var badge =
+              c.status === "Selesai"
+                ? "bg-success"
+                : c.status === "Ditolak"
+                  ? "bg-danger"
+                  : c.status === "Diproses"
+                    ? "bg-info text-dark"
+                    : "bg-warning text-dark";
+            h +=
+              "<tr><td>" +
+              AdminApp.escapeHtml(t ? t.nama : "-") +
+              "</td><td>" +
+              AdminApp.escapeHtml(room ? room.nomorKamar : "-") +
+              "</td><td>" +
+              AdminApp.escapeHtml(c.judul) +
+              "</td><td>" +
+              AdminApp.escapeHtml(c.kategori) +
+              '</td><td class="small">' +
+              DB.formatDateShort(c.tanggalLaporan) +
+              '</td><td><span class="badge ' +
+              badge +
+              '">' +
+              AdminApp.escapeHtml(c.status) +
+              '</span></td><td><button class="btn btn-sm btn-outline-primary btn-detail" data-id="' +
+              AdminApp.escapeHtml(c.id) +
+              '">Detail</button></td></tr>';
+          });
+          h += "</tbody></table></div></div>";
+          wrap.innerHTML = h;
+          wrap.querySelectorAll(".btn-detail").forEach(function (b) {
+            b.addEventListener("click", function () {
+              openDetail(b.getAttribute("data-id"));
+            });
+          });
+        }
+        function openDetail(id) {
+          var c = DB.getComplaints().find(function (x) {
+            return x.id === id;
+          });
+          if (!c) return;
+          var t = DB.getTenantById(c.tenantId);
+          var room = DB.getRoomById(c.roomId);
+          document.getElementById("klDetailBody").innerHTML =
+            '<dl class="row">' +
+            '<dt class="col-sm-3">Penghuni</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(t ? t.nama : "-") +
+            "</dd>" +
+            '<dt class="col-sm-3">Kamar</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(
+              room ? room.nomorKamar + " (Lantai " + room.lantai + ")" : "-",
+            ) +
+            "</dd>" +
+            '<dt class="col-sm-3">Kategori</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(c.kategori) +
+            "</dd>" +
+            '<dt class="col-sm-3">Judul</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(c.judul) +
+            "</dd>" +
+            '<dt class="col-sm-3">Deskripsi</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(c.deskripsi) +
+            "</dd>" +
+            '<dt class="col-sm-3">Tanggal</dt><dd class="col-sm-9">' +
+            DB.formatDate(c.tanggalLaporan) +
+            "</dd>" +
+            '<dt class="col-sm-3">Status</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(c.status) +
+            "</dd>" +
+            "</dl>" +
+            (c.foto
+              ? '<img src="' +
+                c.foto +
+                '" class="img-fluid rounded-3 border mb-2" alt="Foto keluhan">'
+              : "") +
+            '<div class="mt-2"><label class="form-label">Tanggapan Admin</label><textarea class="form-control" id="klTanggapan" rows="3">' +
+            AdminApp.escapeHtml(c.tanggapanAdmin || "") +
+            "</textarea></div>" +
+            '<div class="mt-2"><label class="form-label">Ubah Status</label><select class="form-select" id="klStatusSel">' +
+            ["Menunggu", "Diproses", "Selesai", "Ditolak"]
+              .map(function (s) {
+                return (
+                  '<option value="' +
+                  s +
+                  '"' +
+                  (c.status === s ? " selected" : "") +
+                  ">" +
+                  s +
+                  "</option>"
+                );
+              })
+              .join("") +
+            "</select></div>";
+          var footer = document.getElementById("klDetailFooter");
+          footer.innerHTML =
+            '<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button><button type="button" class="btn btn-primary" id="klSaveBtn">Simpan</button>';
+          document
+            .getElementById("klSaveBtn")
+            .addEventListener("click", function () {
+              var list = DB.getComplaints();
+              var idx = list.findIndex(function (x) {
+                return x.id === c.id;
+              });
+              list[idx].tanggapanAdmin = document
+                .getElementById("klTanggapan")
+                .value.trim();
+              list[idx].status = document.getElementById("klStatusSel").value;
+              list[idx].tanggalTanggapan = new Date().toISOString();
+              if (DB.saveComplaints(list)) {
+                Auth.notifyTenant(
+                  c.tenantId,
+                  "Tanggapan Keluhan",
+                  'Keluhan "' +
+                    c.judul +
+                    '" telah ditanggapi. Status: ' +
+                    list[idx].status,
+                  "keluhan",
+                  c.id,
+                  "keluhan.html",
+                );
+                bootstrap.Modal.getInstance(
+                  document.getElementById("klDetailModal"),
+                ).hide();
+                toast("Keluhan diperbarui.");
+                render();
+              }
+            });
+          bootstrap.Modal.getOrCreateInstance(
+            document.getElementById("klDetailModal"),
+          ).show();
+        }
+        document.addEventListener("DOMContentLoaded", function () {
+          AdminApp.initAdminPage("keluhan.html", "Keluhan Penghuni");
+          render();
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kontak - Kost-Heaven-Gunungsitoli</title>
+    <link rel="stylesheet" href="bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="index.html">Kost-Heaven</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#mainNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNav">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Beranda</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="kamar.html">Kamar</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="tentang.html">Tentang</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="kontak.html">Kontak</a>
+            </li>
+          </ul>
+          <div class="d-flex gap-2 align-items-center">
+            <a
+              href="login.html"
+              id="navLogin"
+              class="btn btn-outline-light btn-sm"
+              >Login</a
+            >
+            <a href="#" id="navDashboard" class="btn btn-warning btn-sm d-none"
+              >Dashboard</a
+            >
+            <div id="navUserMenu" class="dropdown d-none">
+              <button
+                class="btn btn-outline-light btn-sm dropdown-toggle"
+                type="button"
+                data-bs-toggle="dropdown"
+              >
+                <span id="navUserName">User</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end">
+                <li>
+                  <span
+                    class="dropdown-item-text small text-muted"
+                    id="navUserRole"
+                  ></span>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <li>
+                  <a class="dropdown-item" href="#" id="navLogoutBtn">Logout</a>
+                </li>
+              </ul>
+            </div>
+            <a
+              href="pendaftaran.html"
+              class="btn btn-light btn-sm text-primary fw-bold"
+              >Daftar Kost</a
+            >
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container py-4">
+      <nav aria-label="breadcrumb"></nav>
+
+      <h1>Hubungi Kami</h1>
+      <p class="text-muted">
+        Punya pertanyaan mengenai kamar putra, kamar putri, fasilitas, harga
+        sewa, atau proses pendaftaran?
+      </p>
+      <p>
+        Tim pengelola Kost-Heaven siap membantu memberikan informasi yang Anda
+        butuhkan.
+      </p>
+
+      <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card shadow-sm h-100 bg-primary text-white border-0">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">Informasi Kontak</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2"><strong>Nama Kost:</strong> <span data-setting="namaKost"></span></li>
+                        <li class="mb-2"><strong>Alamat:</strong> <span data-setting="alamat"></span></li>
+                        <li class="mb-2"><strong>WhatsApp:</strong> <span data-setting="whatsapp"></span></li>
+                        <li class="mb-2"><strong>Telepon:</strong> <span data-setting="telepon"></span></li>
+                        <li class="mb-2"><strong>Email:</strong> <span data-setting="email"></span></li>
+                        <li class="mb-2"><strong>Jam Pelayanan:</strong> <span data-setting="jamPelayanan"></span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-7">
+            <div class="card shadow-sm bg-primary text-white border-0">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">Kirim Pesan</h5>
+                    <div id="kontakAlert" class="d-none"></div>
+                    <form id="kontakForm" novalidate>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="kontakNama" class="form-label">Nama Lengkap *</label>
+                                <input type="text" class="form-control" id="kontakNama" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="kontakEmail" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="kontakEmail" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="kontakHP" class="form-label">Nomor HP</label>
+                                <input type="tel" class="form-control" id="kontakHP">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="kontakSubjek" class="form-label">Subjek *</label>
+                                <input type="text" class="form-control" id="kontakSubjek" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="kontakPesan" class="form-label">Pesan *</label>
+                                <textarea class="form-control" id="kontakPesan" rows="4" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-light text-primary fw-bold">Kirim Pesan</button>
+                                <p class="small text-white-50 mb-0 mt-2">Form ini merupakan simulasi. Pesan tidak dikirim melalui email sungguhan.</p>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+      <hr class="my-5" />
+
+      <h2>FAQ</h2>
+      <div class="accordion" id="faqAccordion">
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq1"
+            >
+              Bagaimana cara mendaftar?
+            </button>
+          </h2>
+          <div
+            id="faq1"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">
+              Buka halaman Pendaftaran, pilih kategori Putra/Putri, pilih kamar
+              tersedia, isi formulir, lalu kirim. Simpan nomor pendaftaran Anda.
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq2"
+            >
+              Berapa harga sewa?
+            </button>
+          </h2>
+          <div
+            id="faq2"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">
+              Harga awal seluruh kamar adalah Rp4.000.000 per tahun.
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq3"
+            >
+              Apa fasilitas kamar?
+            </button>
+          </h2>
+          <div
+            id="faq3"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">
+              Ranjang tingkat dua beserta perlengkapan tidur, meja belajar,
+              kursi, kamar mandi dalam, rak pakaian, serta pencahayaan dan
+              ventilasi.
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq4"
+            >
+              Apa perbedaan kamar putra dan putri?
+            </button>
+          </h2>
+          <div
+            id="faq4"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">
+              Kamar putra berada di lantai 1 (K01–K06), sedangkan kamar putri
+              berada di lantai 2 (K07–K12).
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq5"
+            >
+              Di lantai berapa kamar putra?
+            </button>
+          </h2>
+          <div
+            id="faq5"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">Kamar putra berada di lantai 1.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq6"
+            >
+              Di lantai berapa kamar putri?
+            </button>
+          </h2>
+          <div
+            id="faq6"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">Kamar putri berada di lantai 2.</div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq7"
+            >
+              Bagaimana mengetahui ketersediaan kamar?
+            </button>
+          </h2>
+          <div
+            id="faq7"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">
+              Lihat halaman Kamar. Kamar dengan status Tersedia dapat diajukan
+              pendaftaran.
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq8"
+            >
+              Bagaimana pembayaran dilakukan?
+            </button>
+          </h2>
+          <div
+            id="faq8"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">
+              Penghuni login, melihat tagihan, transfer manual ke rekening
+              pengelola, lalu mengunggah bukti pembayaran melalui dashboard
+              penghuni.
+            </div>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button
+              class="accordion-button collapsed"
+              type="button"
+              data-bs-toggle="collapse"
+              data-bs-target="#faq9"
+            >
+              Bagaimana menghubungi pengelola?
+            </button>
+          </h2>
+          <div
+            id="faq9"
+            class="accordion-collapse collapse"
+            data-bs-parent="#faqAccordion"
+          >
+            <div class="accordion-body">
+              Gunakan informasi kontak pada halaman ini atau kirim pesan melalui
+              form di atas.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="siteFooter"></div>
+
+    <script src="bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="js/database.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/public.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var s = DB.getSettings();
+        var link = document.getElementById("mapsLink");
+        if (link && s.googleMaps) {
+          link.href = s.googleMaps;
+          link.classList.remove("d-none");
+        }
+      });
+    </script>
+  </body>
+</html>

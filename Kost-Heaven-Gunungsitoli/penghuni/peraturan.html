@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Peraturan Kost - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Penghuni</small>
+        </div>
+        <div id="penghuniSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="penghuniSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="penghuniSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="penghuniTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Peraturan Kost</h4>
+          <div id="prContent"></div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/penghuni.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        var tenant = PenghuniApp.initPenghuniPage(
+          "peraturan.html",
+          "Peraturan Kost",
+        );
+        if (!tenant) return;
+        var s = DB.getSettings();
+        var content = document.getElementById("prContent");
+        content.innerHTML =
+          '<div class="accordion" id="prAcc">' +
+          '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#pr1">Pembagian Lantai</button></h2>' +
+          '<div id="pr1" class="accordion-collapse collapse show" data-bs-parent="#prAcc"><div class="accordion-body">Lantai 1 khusus Putra (K01–K06). Lantai 2 khusus Putri (K07–K12).</div></div></div>' +
+          '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pr2">Kebersihan</button></h2>' +
+          '<div id="pr2" class="accordion-collapse collapse" data-bs-parent="#prAcc"><div class="accordion-body">Setiap penghuni wajib menjaga kebersihan kamar dan area bersama.</div></div></div>' +
+          '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pr3">Tamu</button></h2>' +
+          '<div id="pr3" class="accordion-collapse collapse" data-bs-parent="#prAcc"><div class="accordion-body">Tamu wajib melapor ke pengelola. Dilarang membawa tamu lawan jenis ke dalam kamar.</div></div></div>' +
+          '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pr4">Fasilitas Bersama</button></h2>' +
+          '<div id="pr4" class="accordion-collapse collapse" data-bs-parent="#prAcc"><div class="accordion-body">Gunakan fasilitas bersama dengan bijak dan jaga kebersihannya.</div></div></div>' +
+          '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pr5">Pembayaran</button></h2>' +
+          '<div id="pr5" class="accordion-collapse collapse" data-bs-parent="#prAcc"><div class="accordion-body">Pembayaran sewa dilakukan sesuai jadwal. Unggah bukti pembayaran melalui dashboard penghuni.</div></div></div>' +
+          '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pr6">Kontrak</button></h2>' +
+          '<div id="pr6" class="accordion-collapse collapse" data-bs-parent="#prAcc"><div class="accordion-body">Kontrak sewa memiliki masa berlaku. Perpanjangan dapat diajukan melalui dashboard penghuni.</div></div></div>' +
+          '<div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#pr7">Ketertiban</button></h2>' +
+          '<div id="pr7" class="accordion-collapse collapse" data-bs-parent="#prAcc"><div class="accordion-body">Jaga ketenangan dan ketertiban lingkungan kost, terutama pada malam hari.</div></div></div>' +
+          "</div>" +
+          (s.peraturan
+            ? '<div class="alert alert-info mt-4"><strong>Catatan Pengelola:</strong> ' +
+              PenghuniApp.escapeHtml(s.peraturan) +
+              "</div>"
+            : "");
+      });
+    </script>
+  </body>
+</html>

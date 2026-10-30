@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kontrak Sewa - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Kontrak Sewa</h4>
+          <div id="ktContent"></div>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="ktToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="ktToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      (function () {
+        function toast(msg, cls) {
+          var el = document.getElementById("ktToast");
+          el.className =
+            "toast align-items-center border-0 " + (cls || "text-bg-success");
+          document.getElementById("ktToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(el).show();
+        }
+        function render() {
+          var contracts = DB.getContracts();
+          var requests = DB.getContractRequests();
+          var content = document.getElementById("ktContent");
+          var h = "<h5>Kontrak Aktif</h5>";
+          var active = contracts.filter(function (c) {
+            return c.status === "Aktif";
+          });
+          if (!active.length)
+            h += '<p class="text-muted">Tidak ada kontrak aktif.</p>';
+          else {
+            h +=
+              '<div class="card mb-4"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>ID</th><th>Penghuni</th><th>Kamar</th><th>Lantai</th><th>Mulai</th><th>Berakhir</th><th>Harga</th><th>Status</th></tr></thead><tbody>';
+            active.forEach(function (c) {
+              var t = DB.getTenantById(c.tenantId);
+              var room = DB.getRoomById(c.roomId);
+              h +=
+                '<tr><td class="small">' +
+                AdminApp.escapeHtml(c.id) +
+                "</td><td>" +
+                AdminApp.escapeHtml(t ? t.nama : "-") +
+                "</td><td>" +
+                AdminApp.escapeHtml(room ? room.nomorKamar : "-") +
+                "</td><td>" +
+                (room ? room.lantai : "-") +
+                "</td><td>" +
+                DB.formatDateShort(c.tanggalMulai) +
+                "</td><td>" +
+                DB.formatDateShort(c.tanggalBerakhir) +
+                "</td><td>" +
+                DB.formatRupiah(c.hargaSewa) +
+                '</td><td><span class="badge bg-success">Aktif</span></td></tr>';
+            });
+            h += "</tbody></table></div></div>";
+          }
+          h += "<h5>Pengajuan Perpanjangan</h5>";
+          var pending = requests.filter(function (r) {
+            return r.status === "Menunggu";
+          });
+          if (!pending.length)
+            h += '<p class="text-muted">Tidak ada pengajuan menunggu.</p>';
+          else {
+            h +=
+              '<div class="card mb-4"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>ID</th><th>Penghuni</th><th>Kontrak</th><th>Durasi</th><th>Tanggal</th><th>Aksi</th></tr></thead><tbody>';
+            pending.forEach(function (r) {
+              var t = DB.getTenantById(r.tenantId);
+              h +=
+                '<tr><td class="small">' +
+                AdminApp.escapeHtml(r.id) +
+                "</td><td>" +
+                AdminApp.escapeHtml(t ? t.nama : "-") +
+                '</td><td class="small">' +
+                AdminApp.escapeHtml(r.contractId) +
+                "</td><td>" +
+                r.durasiPerpanjangan +
+                " bln</td><td>" +
+                DB.formatDateShort(r.tanggalPengajuan) +
+                '</td><td><button class="btn btn-sm btn-success btn-approve" data-id="' +
+                AdminApp.escapeHtml(r.id) +
+                '">Setujui</button> <button class="btn btn-sm btn-danger btn-reject" data-id="' +
+                AdminApp.escapeHtml(r.id) +
+                '">Tolak</button></td></tr>';
+            });
+            h += "</tbody></table></div></div>";
+          }
+          h += "<h5>Riwayat Kontrak</h5>";
+          var all = contracts.slice().sort(function (a, b) {
+            return new Date(b.tanggalMulai) - new Date(a.tanggalMulai);
+          });
+          if (!all.length) h += '<p class="text-muted">Belum ada riwayat.</p>';
+          else {
+            h +=
+              '<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>ID</th><th>Penghuni</th><th>Kamar</th><th>Mulai</th><th>Berakhir</th><th>Status</th></tr></thead><tbody>';
+            all.forEach(function (c) {
+              var t = DB.getTenantById(c.tenantId);
+              var room = DB.getRoomById(c.roomId);
+              h +=
+                '<tr><td class="small">' +
+                AdminApp.escapeHtml(c.id) +
+                "</td><td>" +
+                AdminApp.escapeHtml(t ? t.nama : "-") +
+                "</td><td>" +
+                AdminApp.escapeHtml(room ? room.nomorKamar : "-") +
+                "</td><td>" +
+                DB.formatDateShort(c.tanggalMulai) +
+                "</td><td>" +
+                DB.formatDateShort(c.tanggalBerakhir) +
+                "</td><td>" +
+                AdminApp.escapeHtml(c.status) +
+                "</td></tr>";
+            });
+            h += "</tbody></table></div></div>";
+          }
+          content.innerHTML = h;
+          content.querySelectorAll(".btn-approve").forEach(function (b) {
+            b.addEventListener("click", function () {
+              approveRequest(b.getAttribute("data-id"));
+            });
+          });
+          content.querySelectorAll(".btn-reject").forEach(function (b) {
+            b.addEventListener("click", function () {
+              rejectRequest(b.getAttribute("data-id"));
+            });
+          });
+        }
+        function approveRequest(id) {
+          var requests = DB.getContractRequests();
+          var idx = requests.findIndex(function (r) {
+            return r.id === id;
+          });
+          if (idx < 0) return;
+          var req = requests[idx];
+          var contracts = DB.getContracts();
+          var cidx = contracts.findIndex(function (c) {
+            return c.id === req.contractId;
+          });
+          if (cidx < 0) return;
+          DB.saveContracts(contracts);
+
+          var bills = DB.getBills();
+          var billId = DB.generateId("BILL");
+          var room = DB.getRoomById(c.roomId);
+          var nominal = room
+            ? Math.round((room.hargaTahunan * req.durasiPerpanjangan) / 12)
+            : 0;
+          bills.push({
+            id: billId,
+            tenantId: req.tenantId,
+            roomId: c.roomId,
+            contractId: c.id,
+            periode: new Date().getFullYear().toString(),
+            jenisTagihan:
+              "Perpanjangan Kontrak (" + req.durasiPerpanjangan + " bulan)",
+            nominal: nominal,
+            tanggalTerbit: DB.todayISO(),
+            jatuhTempo: DB.addMonths(DB.todayISO(), 1),
+            status: "Belum Lunas",
+          });
+          DB.saveBills(bills);
+
+          requests[idx].status = "Disetujui";
+          requests[idx].adminResponse =
+            "Disetujui. Kontrak diperpanjang " +
+            req.durasiPerpanjangan +
+            " bulan.";
+          requests[idx].billId = billId;
+          DB.saveContractRequests(requests);
+
+          Auth.notifyTenant(
+            req.tenantId,
+            "Perpanjangan Disetujui",
+            "Kontrak Anda diperpanjang " +
+              req.durasiPerpanjangan +
+              " bulan. Tagihan telah dibuat.",
+            "kontrak",
+            req.id,
+            "kontrak.html",
+          );
+          toast("Perpanjangan disetujui.");
+          render();
+        }
+
+        function rejectRequest(id) {
+          var alasan = prompt("Alasan penolakan:");
+          if (!alasan) return;
+          var requests = DB.getContractRequests();
+          var idx = requests.findIndex(function (r) {
+            return r.id === id;
+          });
+          if (idx < 0) return;
+          requests[idx].status = "Ditolak";
+          requests[idx].adminResponse = alasan;
+          DB.saveContractRequests(requests);
+          Auth.notifyTenant(
+            requests[idx].tenantId,
+            "Perpanjangan Ditolak",
+            "Pengajuan perpanjangan ditolak: " + alasan,
+            "kontrak",
+            id,
+            "kontrak.html",
+          );
+          toast("Pengajuan ditolak.", "text-bg-danger");
+          render();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+          AdminApp.initAdminPage("kontrak.html", "Kontrak Sewa");
+          render();
+        });
+      })();
+    </script>
+  </body>
+</html>

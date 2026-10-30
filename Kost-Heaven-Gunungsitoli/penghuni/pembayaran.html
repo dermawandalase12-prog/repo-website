@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pembayaran - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Penghuni</small>
+        </div>
+        <div id="penghuniSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="penghuniSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="penghuniSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="penghuniTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Pembayaran</h4>
+          <ul class="nav nav-tabs mb-3" id="payTabs">
+            <li class="nav-item">
+              <button class="nav-link active" data-tab="tagihan">
+                Tagihan Saya
+              </button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-tab="bayar">Bayar Sekarang</button>
+            </li>
+            <li class="nav-item">
+              <button class="nav-link" data-tab="riwayat">
+                Riwayat Pembayaran
+              </button>
+            </li>
+          </ul>
+          <div id="payContent"></div>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="payToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="payToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/penghuni.js"></script>
+    <script>
+      (function () {
+        var tenant = null;
+        var user = null;
+        var activeTab = "tagihan";
+        var selectedBillId = null;
+
+        function toast(msg, cls) {
+          var el = document.getElementById("payToast");
+          el.className =
+            "toast align-items-center border-0 " + (cls || "text-bg-success");
+          document.getElementById("payToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(el).show();
+        }
+
+        function renderTagihan() {
+          var bills = DB.getBillsByTenant(tenant.id)
+            .slice()
+            .sort(function (a, b) {
+              return new Date(b.tanggalTerbit) - new Date(a.tanggalTerbit);
+            });
+          if (!bills.length)
+            return '<div class="alert alert-info">Belum ada tagihan.</div>';
+          var h =
+            '<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>ID</th><th>Periode</th><th>Jenis</th><th>Nominal</th><th>Jatuh Tempo</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
+          bills.forEach(function (b) {
+            var badge =
+              b.status === "Lunas"
+                ? "bg-success"
+                : b.status === "Ditolak"
+                  ? "bg-danger"
+                  : b.status === "Menunggu Verifikasi"
+                    ? "bg-warning text-dark"
+                    : "bg-secondary";
+            var btn =
+              b.status === "Lunas"
+                ? ""
+                : '<button class="btn btn-sm btn-primary btn-pay" data-id="' +
+                  b.id +
+                  '">Bayar</button>';
+            h +=
+              '<tr><td class="small">' +
+              PenghuniApp.escapeHtml(b.id) +
+              "</td><td>" +
+              PenghuniApp.escapeHtml(b.periode) +
+              "</td><td>" +
+              PenghuniApp.escapeHtml(b.jenisTagihan) +
+              "</td><td>" +
+              DB.formatRupiah(b.nominal) +
+              "</td><td>" +
+              DB.formatDate(b.jatuhTempo) +
+              '</td><td><span class="badge ' +
+              badge +
+              '">' +
+              PenghuniApp.escapeHtml(b.status) +
+              "</span></td><td>" +
+              btn +
+              "</td></tr>";
+          });
+          h += "</tbody></table></div></div>";
+          return h;
+        }
+
+        function renderBayar() {
+          var s = DB.getSettings();
+          var bill = selectedBillId
+            ? DB.getBills().find(function (b) {
+                return b.id === selectedBillId;
+              })
+            : null;
+          if (!bill) {
+            var unpaid = DB.getBillsByTenant(tenant.id).filter(function (b) {
+              return b.status !== "Lunas";
+            });
+            if (!unpaid.length)
+              return '<div class="alert alert-success">Tidak ada tagihan yang perlu dibayar.</div>';
+            var h =
+              '<div class="alert alert-info">Pilih tagihan yang ingin dibayar:</div><div class="list-group">';
+            unpaid.forEach(function (b) {
+              h +=
+                '<button type="button" class="list-group-item list-group-item-action btn-select-bill" data-id="' +
+                b.id +
+                '">' +
+                PenghuniApp.escapeHtml(b.id) +
+                " - " +
+                PenghuniApp.escapeHtml(b.periode) +
+                " - " +
+                DB.formatRupiah(b.nominal) +
+                ' <span class="badge bg-secondary">' +
+                PenghuniApp.escapeHtml(b.status) +
+                "</span></button>";
+            });
+            h += "</div>";
+            return h;
+          }
+          var pendingPayment = DB.getPaymentsByBill(bill.id).find(function (p) {
+            return p.status === "Menunggu Verifikasi";
+          });
+          if (pendingPayment) {
+            return '<div class="alert alert-warning">Bukti pembayaran untuk tagihan ini sedang menunggu verifikasi admin.</div>';
+          }
+          var room = DB.getRoomById(bill.roomId);
+          return (
+            '<div class="row g-3">' +
+            '<div class="col-lg-5"><div class="card"><div class="card-body">' +
+            "<h6>Informasi Tagihan</h6>" +
+            '<p class="mb-1"><strong>Penghuni:</strong> ' +
+            PenghuniApp.escapeHtml(tenant.nama) +
+            "</p>" +
+            '<p class="mb-1"><strong>Kamar:</strong> ' +
+            PenghuniApp.escapeHtml(room ? room.nomorKamar : "-") +
+            " (Lantai " +
+            (room ? room.lantai : "-") +
+            ")</p>" +
+            '<p class="mb-1"><strong>ID Tagihan:</strong> ' +
+            PenghuniApp.escapeHtml(bill.id) +
+            "</p>" +
+            '<p class="mb-1"><strong>Periode:</strong> ' +
+            PenghuniApp.escapeHtml(bill.periode) +
+            "</p>" +
+            '<p class="mb-1"><strong>Jatuh Tempo:</strong> ' +
+            DB.formatDate(bill.jatuhTempo) +
+            "</p>" +
+            '<p class="fw-bold text-primary mb-1">Nominal: ' +
+            DB.formatRupiah(bill.nominal) +
+            "</p>" +
+            "<hr>" +
+            '<p class="mb-1"><strong>Bank:</strong> ' +
+            PenghuniApp.escapeHtml(s.namaBank || "-") +
+            "</p>" +
+            '<p class="mb-1"><strong>No. Rekening:</strong> ' +
+            PenghuniApp.escapeHtml(s.nomorRekening || "-") +
+            "</p>" +
+            '<p class="mb-2"><strong>Atas Nama:</strong> ' +
+            PenghuniApp.escapeHtml(s.namaPemilikRekening || "-") +
+            "</p>" +
+            '<button type="button" class="btn btn-sm btn-outline-primary" id="copyRekBtn">Salin Nomor Rekening</button>' +
+            "</div></div></div>" +
+            '<div class="col-lg-7"><div class="card"><div class="card-body">' +
+            "<h6>Form Pembayaran</h6>" +
+            '<div id="payFormAlert" class="d-none"></div>' +
+            '<div class="mb-2"><label class="form-label">Tanggal Transfer</label><input type="date" class="form-control" id="payTanggal" value="' +
+            DB.todayISO() +
+            '"></div>' +
+            '<div class="mb-2"><label class="form-label">Nominal Transfer</label><input type="number" class="form-control" id="payNominal" value="' +
+            bill.nominal +
+            '"></div>' +
+            '<div class="mb-2"><label class="form-label">Upload Bukti</label><input type="file" class="form-control" id="payFile" accept="image/jpeg,image/png,image/webp"></div>' +
+            '<div id="payPreview" class="mb-2"></div>' +
+            '<button type="button" class="btn btn-primary" id="paySubmitBtn">Kirim Bukti</button>' +
+            '<button type="button" class="btn btn-outline-secondary" id="payCancelBtn">Batal</button>' +
+            "</div></div></div>" +
+            "</div>"
+          );
+        }
+
+        function renderRiwayat() {
+          var payments = DB.getPaymentsByTenant(tenant.id)
+            .slice()
+            .sort(function (a, b) {
+              return new Date(b.tanggalUpload) - new Date(a.tanggalUpload);
+            });
+          if (!payments.length)
+            return '<div class="alert alert-info">Belum ada riwayat pembayaran.</div>';
+          var h =
+            '<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>ID</th><th>Tagihan</th><th>Nominal</th><th>Tanggal</th><th>Status</th><th>Alasan</th><th>Aksi</th></tr></thead><tbody>';
+          payments.forEach(function (p) {
+            var badge =
+              p.status === "Lunas"
+                ? "bg-success"
+                : p.status === "Ditolak"
+                  ? "bg-danger"
+                  : "bg-warning text-dark";
+            var aksi = "";
+            if (p.status === "Ditolak") {
+              aksi =
+                '<button class="btn btn-sm btn-primary btn-reupload" data-bill="' +
+                p.billId +
+                '">Upload Ulang</button>';
+            }
+            h +=
+              '<tr><td class="small">' +
+              PenghuniApp.escapeHtml(p.id) +
+              '</td><td class="small">' +
+              PenghuniApp.escapeHtml(p.billId) +
+              "</td><td>" +
+              DB.formatRupiah(p.nominalTransfer) +
+              '</td><td class="small">' +
+              DB.formatDateShort(p.tanggalTransfer) +
+              '</td><td><span class="badge ' +
+              badge +
+              '">' +
+              PenghuniApp.escapeHtml(p.status) +
+              '</span></td><td class="small">' +
+              PenghuniApp.escapeHtml(p.alasanPenolakan || "-") +
+              "</td><td>" +
+              aksi +
+              "</td></tr>";
+          });
+          h += "</tbody></table></div></div>";
+          return h;
+        }
+
+        function render() {
+          var wrap = document.getElementById("payContent");
+          if (activeTab === "tagihan") wrap.innerHTML = renderTagihan();
+          else if (activeTab === "bayar") wrap.innerHTML = renderBayar();
+          else wrap.innerHTML = renderRiwayat();
+          bindEvents();
+        }
+
+        function bindEvents() {
+          document.querySelectorAll(".btn-pay").forEach(function (b) {
+            b.addEventListener("click", function () {
+              selectedBillId = b.getAttribute("data-id");
+              activeTab = "bayar";
+              document
+                .querySelectorAll("#payTabs button")
+                .forEach(function (x) {
+                  x.classList.remove("active");
+                });
+              document
+                .querySelector('#payTabs button[data-tab="bayar"]')
+                .classList.add("active");
+              render();
+            });
+          });
+          document.querySelectorAll(".btn-select-bill").forEach(function (b) {
+            b.addEventListener("click", function () {
+              selectedBillId = b.getAttribute("data-id");
+              render();
+            });
+          });
+          var cancelBtn = document.getElementById("payCancelBtn");
+          if (cancelBtn)
+            cancelBtn.addEventListener("click", function () {
+              selectedBillId = null;
+              render();
+            });
+          var copyBtn = document.getElementById("copyRekBtn");
+          if (copyBtn)
+            copyBtn.addEventListener("click", function () {
+              var s = DB.getSettings();
+              if (navigator.clipboard) {
+                navigator.clipboard
+                  .writeText(s.nomorRekening || "")
+                  .then(function () {
+                    toast("Nomor rekening disalin.");
+                  });
+              }
+            });
+          var fileInput = document.getElementById("payFile");
+          if (fileInput)
+            fileInput.addEventListener("change", function () {
+              var preview = document.getElementById("payPreview");
+              preview.innerHTML = "";
+              var file = fileInput.files[0];
+              if (!file) return;
+              if (
+                ["image/jpeg", "image/png", "image/webp"].indexOf(file.type) ===
+                -1
+              ) {
+                preview.innerHTML =
+                  '<div class="alert alert-danger">Tipe file tidak diizinkan.</div>';
+                fileInput.value = "";
+                return;
+              }
+              if (file.size > 5 * 1024 * 1024) {
+                preview.innerHTML =
+                  '<div class="alert alert-danger">Ukuran file maksimal 5MB sebelum kompresi.</div>';
+                fileInput.value = "";
+                return;
+              }
+              var reader = new FileReader();
+              reader.onload = function (e) {
+                var img = document.createElement("img");
+                img.src = e.target.result;
+                img.className = "img-fluid rounded-3";
+                img.style.maxHeight = "200px";
+                preview.innerHTML = "";
+                preview.appendChild(img);
+              };
+              reader.readAsDataURL(file);
+            });
+          var submitBtn = document.getElementById("paySubmitBtn");
+          if (submitBtn) submitBtn.addEventListener("click", submitPayment);
+          document.querySelectorAll(".btn-reupload").forEach(function (b) {
+            b.addEventListener("click", function () {
+              selectedBillId = b.getAttribute("data-bill");
+              activeTab = "bayar";
+              document
+                .querySelectorAll("#payTabs button")
+                .forEach(function (x) {
+                  x.classList.remove("active");
+                });
+              document
+                .querySelector('#payTabs button[data-tab="bayar"]')
+                .classList.add("active");
+              render();
+            });
+          });
+        }
+
+        function compressImage(dataUrl, maxDim, quality, cb) {
+          var img = new Image();
+          img.onload = function () {
+            var ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
+            var w = Math.round(img.width * ratio);
+            var h = Math.round(img.height * ratio);
+            var canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            var ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            cb(canvas.toDataURL("image/jpeg", quality));
+          };
+          img.onerror = function () {
+            cb(null);
+          };
+          img.src = dataUrl;
+        }
+
+        function submitPayment() {
+          var alertBox = document.getElementById("payFormAlert");
+          alertBox.classList.add("d-none");
+          var bill = DB.getBills().find(function (b) {
+            return b.id === selectedBillId;
+          });
+          if (!bill) return;
+          if (bill.status === "Lunas") {
+            toast("Tagihan sudah lunas.", "text-bg-danger");
+            return;
+          }
+          var nominal = Number(document.getElementById("payNominal").value);
+          var tanggal = document.getElementById("payTanggal").value;
+          var file = document.getElementById("payFile").files[0];
+          if (!nominal || nominal !== bill.nominal) {
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent =
+              "Nominal harus sama dengan tagihan (" +
+              DB.formatRupiah(bill.nominal) +
+              ").";
+            alertBox.classList.remove("d-none");
+            return;
+          }
+          if (!tanggal) {
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent = "Tanggal transfer wajib diisi.";
+            alertBox.classList.remove("d-none");
+            return;
+          }
+          if (!file) {
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent = "Bukti pembayaran wajib diunggah.";
+            alertBox.classList.remove("d-none");
+            return;
+          }
+
+          var pending = DB.getPaymentsByBill(bill.id).find(function (p) {
+            return p.status === "Menunggu Verifikasi";
+          });
+          if (pending) {
+            alertBox.className = "alert alert-warning";
+            alertBox.textContent = "Bukti sedang menunggu verifikasi.";
+            alertBox.classList.remove("d-none");
+            return;
+          }
+
+          var reader = new FileReader();
+          reader.onload = function (e) {
+            compressImage(e.target.result, 1280, 0.7, function (compressed) {
+              if (!compressed) {
+                alertBox.className = "alert alert-danger";
+                alertBox.textContent = "Gagal memproses gambar.";
+                alertBox.classList.remove("d-none");
+                return;
+              }
+              var payments = DB.getPayments();
+              var prevAttempts = payments.filter(function (p) {
+                return p.billId === bill.id;
+              }).length;
+              var newPayment = {
+                id: DB.generateId("PAY"),
+                billId: bill.id,
+                tenantId: tenant.id,
+                nominalTransfer: nominal,
+                tanggalTransfer: tanggal,
+                tanggalUpload: new Date().toISOString(),
+                buktiPembayaran: compressed,
+                status: "Menunggu Verifikasi",
+                alasanPenolakan: "",
+                verifiedBy: "",
+                verifiedAt: "",
+                attemptNumber: prevAttempts + 1,
+              };
+              payments.push(newPayment);
+              if (!DB.savePayments(payments)) {
+                alertBox.className = "alert alert-danger";
+                alertBox.textContent =
+                  "Penyimpanan penuh. Gagal menyimpan bukti.";
+                alertBox.classList.remove("d-none");
+                return;
+              }
+              var bills = DB.getBills();
+              var idx = bills.findIndex(function (b) {
+                return b.id === bill.id;
+              });
+              bills[idx].status = "Menunggu Verifikasi";
+              DB.saveBills(bills);
+
+              Auth.notifyAdmin(
+                "Bukti Pembayaran Baru",
+                tenant.nama +
+                  " mengirim bukti pembayaran untuk " +
+                  bill.id +
+                  ".",
+                "pembayaran",
+                newPayment.id,
+                "pembayaran.html",
+              );
+
+              toast("Bukti pembayaran terkirim. Menunggu verifikasi.");
+              selectedBillId = null;
+              activeTab = "riwayat";
+              document
+                .querySelectorAll("#payTabs button")
+                .forEach(function (x) {
+                  x.classList.remove("active");
+                });
+              document
+                .querySelector('#payTabs button[data-tab="riwayat"]')
+                .classList.add("active");
+              render();
+            });
+          };
+          reader.readAsDataURL(file);
+        }
+
+        document.querySelectorAll("#payTabs button").forEach(function (b) {
+          b.addEventListener("click", function () {
+            document.querySelectorAll("#payTabs button").forEach(function (x) {
+              x.classList.remove("active");
+            });
+            b.classList.add("active");
+            activeTab = b.getAttribute("data-tab");
+            render();
+          });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+          tenant = PenghuniApp.initPenghuniPage(
+            "pembayaran.html",
+            "Pembayaran",
+          );
+          user = PenghuniApp.getCurrentUser();
+          if (tenant) render();
+        });
+      })();
+    </script>
+  </body>
+</html>

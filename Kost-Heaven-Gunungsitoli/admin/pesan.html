@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pesan Masuk - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <h4>Pesan Masuk</h4>
+          <div id="msList"></div>
+        </main>
+      </div>
+    </div>
+
+    <div class="modal fade" id="msDetailModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detail Pesan</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body" id="msDetailBody"></div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Tutup
+            </button>
+            <button type="button" class="btn btn-success" id="msDoneBtn">
+              Tandai Selesai
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      (function () {
+        var currentMsgId = null;
+        function render() {
+          var list = DB.getMessages()
+            .slice()
+            .sort(function (a, b) {
+              return new Date(b.tanggal) - new Date(a.tanggal);
+            });
+          var wrap = document.getElementById("msList");
+          if (!list.length) {
+            wrap.innerHTML =
+              '<div class="alert alert-info">Belum ada pesan.</div>';
+            return;
+          }
+          var h =
+            '<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Nama</th><th>Email</th><th>Subjek</th><th>Tanggal</th><th>Status</th><th>Aksi</th></tr></thead><tbody>';
+          list.forEach(function (m) {
+            var badge =
+              m.status === "Baru"
+                ? "bg-warning text-dark"
+                : m.status === "Selesai"
+                  ? "bg-success"
+                  : "bg-secondary";
+            h +=
+              "<tr><td>" +
+              AdminApp.escapeHtml(m.nama) +
+              '</td><td class="small">' +
+              AdminApp.escapeHtml(m.email) +
+              "</td><td>" +
+              AdminApp.escapeHtml(m.subjek) +
+              '</td><td class="small">' +
+              DB.formatDateShort(m.tanggal) +
+              '</td><td><span class="badge ' +
+              badge +
+              '">' +
+              AdminApp.escapeHtml(m.status) +
+              '</span></td><td><button class="btn btn-sm btn-outline-primary btn-read" data-id="' +
+              AdminApp.escapeHtml(m.id) +
+              '">Baca</button> <button class="btn btn-sm btn-outline-danger btn-del" data-id="' +
+              AdminApp.escapeHtml(m.id) +
+              '">Hapus</button></td></tr>';
+          });
+          h += "</tbody></table></div></div>";
+          wrap.innerHTML = h;
+          wrap.querySelectorAll(".btn-read").forEach(function (b) {
+            b.addEventListener("click", function () {
+              openDetail(b.getAttribute("data-id"));
+            });
+          });
+          wrap.querySelectorAll(".btn-del").forEach(function (b) {
+            b.addEventListener("click", function () {
+              if (!confirm("Hapus pesan ini?")) return;
+              var all = DB.getMessages();
+              var idx = all.findIndex(function (x) {
+                return x.id === b.getAttribute("data-id");
+              });
+              all.splice(idx, 1);
+              DB.saveMessages(all);
+              render();
+            });
+          });
+        }
+        function openDetail(id) {
+          var m = DB.getMessages().find(function (x) {
+            return x.id === id;
+          });
+          if (!m) return;
+          currentMsgId = id;
+          if (m.status === "Baru") {
+            var all = DB.getMessages();
+            var idx = all.findIndex(function (x) {
+              return x.id === id;
+            });
+            all[idx].status = "Dibaca";
+            DB.saveMessages(all);
+          }
+          document.getElementById("msDetailBody").innerHTML =
+            '<dl class="row mb-0">' +
+            '<dt class="col-sm-3">Nama</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(m.nama) +
+            "</dd>" +
+            '<dt class="col-sm-3">Email</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(m.email) +
+            "</dd>" +
+            '<dt class="col-sm-3">No. HP</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(m.nomorHP || "-") +
+            "</dd>" +
+            '<dt class="col-sm-3">Subjek</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(m.subjek) +
+            "</dd>" +
+            '<dt class="col-sm-3">Pesan</dt><dd class="col-sm-9">' +
+            AdminApp.escapeHtml(m.pesan) +
+            "</dd>" +
+            '<dt class="col-sm-3">Tanggal</dt><dd class="col-sm-9">' +
+            DB.formatDate(m.tanggal) +
+            "</dd>" +
+            "</dl>";
+          document
+            .getElementById("msDoneBtn")
+            .classList.toggle("d-none", m.status === "Selesai");
+          bootstrap.Modal.getOrCreateInstance(
+            document.getElementById("msDetailModal"),
+          ).show();
+          render();
+        }
+        document
+          .getElementById("msDoneBtn")
+          .addEventListener("click", function () {
+            var all = DB.getMessages();
+            var idx = all.findIndex(function (x) {
+              return x.id === currentMsgId;
+            });
+            if (idx >= 0) {
+              all[idx].status = "Selesai";
+              DB.saveMessages(all);
+            }
+            bootstrap.Modal.getInstance(
+              document.getElementById("msDetailModal"),
+            ).hide();
+            render();
+          });
+        document.addEventListener("DOMContentLoaded", function () {
+          AdminApp.initAdminPage("pesan.html", "Pesan Masuk");
+          render();
+        });
+      })();
+    </script>
+  </body>
+</html>

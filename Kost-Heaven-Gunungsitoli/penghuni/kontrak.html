@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kontrak Sewa - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Penghuni</small>
+        </div>
+        <div id="penghuniSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="penghuniSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="penghuniSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="penghuniTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <div id="kontrakContent"></div>
+        </main>
+      </div>
+    </div>
+
+    <div class="modal fade" id="extendModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Ajukan Perpanjangan</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="extendAlert" class="d-none"></div>
+            <label class="form-label">Durasi Perpanjangan (bulan)</label>
+            <select class="form-select" id="extendDurasi">
+              <option value="6">6 Bulan</option>
+              <option value="12" selected>12 Bulan</option>
+              <option value="24">24 Bulan</option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Batal
+            </button>
+            <button type="button" class="btn btn-primary" id="extendSubmitBtn">
+              Ajukan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="ktToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="ktToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/penghuni.js"></script>
+    <script>
+      (function () {
+        var tenant = null;
+        var activeContract = null;
+
+        function toast(msg) {
+          document.getElementById("ktToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(
+            document.getElementById("ktToast"),
+          ).show();
+        }
+
+        function render() {
+          var content = document.getElementById("kontrakContent");
+          var contracts = DB.getContractsByTenant(tenant.id);
+          var requests = DB.getContractRequests().filter(function (r) {
+            return r.tenantId === tenant.id;
+          });
+          activeContract = DB.getActiveContract(tenant.id);
+
+          var h = "<h4>Kontrak Sewa</h4>";
+          if (activeContract) {
+            var room = DB.getRoomById(activeContract.roomId);
+            var remaining = DB.daysUntil(activeContract.tanggalBerakhir);
+            h +=
+              '<div class="card mb-4"><div class="card-body">' +
+              '<h5 class="card-title">Kontrak Aktif</h5>' +
+              '<dl class="row mb-0">' +
+              '<dt class="col-5">ID Kontrak</dt><dd class="col-7">' +
+              PenghuniApp.escapeHtml(activeContract.id) +
+              "</dd>" +
+              '<dt class="col-5">Kamar</dt><dd class="col-7">' +
+              PenghuniApp.escapeHtml(room ? room.nomorKamar : "-") +
+              "</dd>" +
+              '<dt class="col-5">Lantai</dt><dd class="col-7">' +
+              (room ? room.lantai : "-") +
+              "</dd>" +
+              '<dt class="col-5">Kategori</dt><dd class="col-7">' +
+              PenghuniApp.escapeHtml(tenant.kategori) +
+              "</dd>" +
+              '<dt class="col-5">Tanggal Mulai</dt><dd class="col-7">' +
+              DB.formatDate(activeContract.tanggalMulai) +
+              "</dd>" +
+              '<dt class="col-5">Tanggal Berakhir</dt><dd class="col-7">' +
+              DB.formatDate(activeContract.tanggalBerakhir) +
+              "</dd>" +
+              '<dt class="col-5">Durasi</dt><dd class="col-7">' +
+              activeContract.durasi +
+              " bulan</dd>" +
+              '<dt class="col-5">Harga</dt><dd class="col-7">' +
+              DB.formatRupiah(activeContract.hargaSewa) +
+              "</dd>" +
+              '<dt class="col-5">Status</dt><dd class="col-7"><span class="badge bg-success">' +
+              PenghuniApp.escapeHtml(activeContract.status) +
+              "</span></dd>" +
+              "</dl>" +
+              (remaining <= 60
+                ? '<div class="alert alert-warning mt-3 mb-0">Kontrak berakhir dalam ' +
+                  remaining +
+                  " hari.</div>"
+                : "") +
+              "</div></div>";
+
+            var pendingReq = requests.find(function (r) {
+              return (
+                r.status === "Menunggu" && r.contractId === activeContract.id
+              );
+            });
+            if (pendingReq) {
+              h +=
+                '<div class="alert alert-info">Pengajuan perpanjangan sedang menunggu persetujuan admin.</div>';
+            } else {
+              h +=
+                '<button type="button" class="btn btn-primary mb-4" id="extendBtn">Ajukan Perpanjangan</button>';
+            }
+          } else {
+            h +=
+              '<div class="alert alert-warning">Tidak ada kontrak aktif.</div>';
+          }
+
+          h += "<h5>Riwayat Kontrak</h5>";
+          if (!contracts.length) {
+            h += '<p class="text-muted">Belum ada riwayat.</p>';
+          } else {
+            h +=
+              '<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>ID</th><th>Mulai</th><th>Berakhir</th><th>Durasi</th><th>Harga</th><th>Status</th></tr></thead><tbody>';
+            contracts.forEach(function (c) {
+              h +=
+                '<tr><td class="small">' +
+                PenghuniApp.escapeHtml(c.id) +
+                "</td><td>" +
+                DB.formatDateShort(c.tanggalMulai) +
+                "</td><td>" +
+                DB.formatDateShort(c.tanggalBerakhir) +
+                "</td><td>" +
+                c.durasi +
+                " bln</td><td>" +
+                DB.formatRupiah(c.hargaSewa) +
+                "</td><td>" +
+                PenghuniApp.escapeHtml(c.status) +
+                "</td></tr>";
+            });
+            h += "</tbody></table></div></div>";
+          }
+
+          if (requests.length) {
+            h += '<h5 class="mt-4">Riwayat Pengajuan Perpanjangan</h5>';
+            h +=
+              '<div class="card"><div class="table-responsive"><table class="table mb-0"><thead><tr><th>ID</th><th>Durasi</th><th>Tanggal</th><th>Status</th><th>Respon</th></tr></thead><tbody>';
+            requests.forEach(function (r) {
+              var badge =
+                r.status === "Disetujui"
+                  ? "bg-success"
+                  : r.status === "Ditolak"
+                    ? "bg-danger"
+                    : "bg-warning text-dark";
+              h +=
+                '<tr><td class="small">' +
+                PenghuniApp.escapeHtml(r.id) +
+                "</td><td>" +
+                r.durasiPerpanjangan +
+                " bln</td><td>" +
+                DB.formatDateShort(r.tanggalPengajuan) +
+                '</td><td><span class="badge ' +
+                badge +
+                '">' +
+                PenghuniApp.escapeHtml(r.status) +
+                '</span></td><td class="small">' +
+                PenghuniApp.escapeHtml(r.adminResponse || "-") +
+                "</td></tr>";
+            });
+            h += "</tbody></table></div></div>";
+          }
+
+          content.innerHTML = h;
+
+          var extBtn = document.getElementById("extendBtn");
+          if (extBtn)
+            extBtn.addEventListener("click", function () {
+              document.getElementById("extendAlert").classList.add("d-none");
+              bootstrap.Modal.getOrCreateInstance(
+                document.getElementById("extendModal"),
+              ).show();
+            });
+        }
+
+        document
+          .getElementById("extendSubmitBtn")
+          .addEventListener("click", function () {
+            var durasi = Number(document.getElementById("extendDurasi").value);
+            if (!activeContract) return;
+            var requests = DB.getContractRequests();
+            requests.push({
+              id: DB.generateId("REQ"),
+              contractId: activeContract.id,
+              tenantId: tenant.id,
+              durasiPerpanjangan: durasi,
+              tanggalPengajuan: new Date().toISOString(),
+              status: "Menunggu",
+              adminResponse: "",
+              billId: "",
+            });
+            if (!DB.saveContractRequests(requests)) {
+              var a = document.getElementById("extendAlert");
+              a.className = "alert alert-danger";
+              a.textContent = "Gagal menyimpan.";
+              a.classList.remove("d-none");
+              return;
+            }
+            Auth.notifyAdmin(
+              "Pengajuan Perpanjangan",
+              tenant.nama + " mengajukan perpanjangan " + durasi + " bulan.",
+              "kontrak",
+              activeContract.id,
+              "kontrak.html",
+            );
+            bootstrap.Modal.getInstance(
+              document.getElementById("extendModal"),
+            ).hide();
+            toast("Pengajuan perpanjangan terkirim.");
+            render();
+          });
+
+        document.addEventListener("DOMContentLoaded", function () {
+          tenant = PenghuniApp.initPenghuniPage("kontrak.html", "Kontrak Sewa");
+          if (tenant) render();
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Notifikasi - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Penghuni</small>
+        </div>
+        <div id="penghuniSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="penghuniSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="penghuniSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="penghuniTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="mb-0">Notifikasi</h4>
+            <button class="btn btn-sm btn-outline-primary" id="notifReadAll">
+              Tandai Semua Dibaca
+            </button>
+          </div>
+          <div id="notifList"></div>
+        </main>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/penghuni.js"></script>
+    <script>
+      (function () {
+        var user = null;
+        function render() {
+          var list = DB.getNotificationsByUser(user.id)
+            .slice()
+            .sort(function (a, b) {
+              return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+          var wrap = document.getElementById("notifList");
+          if (!list.length) {
+            wrap.innerHTML =
+              '<div class="alert alert-info">Belum ada notifikasi.</div>';
+            return;
+          }
+          var h = '<div class="list-group">';
+          list.forEach(function (n) {
+            var link = n.targetPage ? n.targetPage : "#";
+            h +=
+              '<a href="' +
+              PenghuniApp.escapeHtml(link) +
+              '" class="list-group-item list-group-item-action' +
+              (n.isRead ? "" : " bg-light") +
+              '" data-id="' +
+              PenghuniApp.escapeHtml(n.id) +
+              '">' +
+              '<div class="d-flex justify-content-between"><strong>' +
+              PenghuniApp.escapeHtml(n.judul) +
+              '</strong><small class="text-muted">' +
+              DB.formatDateShort(n.createdAt) +
+              "</small></div>" +
+              '<p class="small mb-0">' +
+              PenghuniApp.escapeHtml(n.pesan) +
+              "</p>" +
+              "</a>";
+          });
+          h += "</div>";
+          wrap.innerHTML = h;
+          wrap.querySelectorAll(".list-group-item").forEach(function (a) {
+            a.addEventListener("click", function () {
+              var notifs = DB.getNotifications();
+              var idx = notifs.findIndex(function (n) {
+                return n.id === a.getAttribute("data-id");
+              });
+              if (idx >= 0) {
+                notifs[idx].isRead = true;
+                DB.saveNotifications(notifs);
+              }
+            });
+          });
+        }
+        document
+          .getElementById("notifReadAll")
+          .addEventListener("click", function () {
+            var notifs = DB.getNotifications();
+            notifs.forEach(function (n) {
+              if (n.recipientUserId === user.id) n.isRead = true;
+            });
+            DB.saveNotifications(notifs);
+            render();
+          });
+        document.addEventListener("DOMContentLoaded", function () {
+          var t = PenghuniApp.initPenghuniPage("notifikasi.html", "Notifikasi");
+          user = PenghuniApp.getCurrentUser();
+          if (t) render();
+        });
+      })();
+    </script>
+  </body>
+</html>

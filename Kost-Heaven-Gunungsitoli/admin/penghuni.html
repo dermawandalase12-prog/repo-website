@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Data Penghuni - Kost-Heaven</title>
+    <link rel="stylesheet" href="../bootstrap-5.3/css/bootstrap.min.css" />
+  </head>
+  <body class="bg-light">
+    <div class="d-flex min-vh-100">
+      <aside
+        class="bg-white border-end d-none d-lg-block"
+        style="width: 250px; flex-shrink: 0"
+      >
+        <div class="p-3 border-bottom">
+          <h5 class="mb-0 text-primary fw-bold">Kost-Heaven</h5>
+          <small class="text-muted">Admin Panel</small>
+        </div>
+        <div id="adminSidebar"></div>
+      </aside>
+
+      <div
+        class="offcanvas offcanvas-start"
+        tabindex="-1"
+        id="adminSidebarOffcanvas"
+      >
+        <div class="offcanvas-header">
+          <h5 class="offcanvas-title text-primary fw-bold">Kost-Heaven</h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="offcanvas"
+          ></button>
+        </div>
+        <div class="offcanvas-body p-0" id="adminSidebarOffcanvasBody"></div>
+      </div>
+
+      <div class="flex-grow-1 d-flex flex-column">
+        <header
+          class="bg-white border-bottom p-3 sticky-top"
+          id="adminTopbar"
+        ></header>
+        <main class="p-3 p-md-4 flex-grow-1">
+          <div
+            class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2"
+          >
+            <h4 class="mb-0">Data Penghuni</h4>
+            <button class="btn btn-primary btn-sm" id="apAddBtn">
+              Tambah Penghuni
+            </button>
+          </div>
+          <div class="card mb-3">
+            <div class="card-body">
+              <div class="row g-2">
+                <div class="col-md-5">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    id="apSearch"
+                    placeholder="Cari nama / kamar"
+                  />
+                </div>
+                <div class="col-md-4">
+                  <select class="form-select form-select-sm" id="apKategori">
+                    <option value="">Semua Kategori</option>
+                    <option value="Putra">Putra</option>
+                    <option value="Putri">Putri</option>
+                  </select>
+                </div>
+                <div class="col-md-3">
+                  <select class="form-select form-select-sm" id="apStatus">
+                    <option value="">Semua Status</option>
+                    <option value="Aktif">Aktif</option>
+                    <option value="Nonaktif">Nonaktif</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="apList"></div>
+        </main>
+      </div>
+    </div>
+
+    <div class="modal fade" id="apModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="apModalTitle">Tambah Penghuni</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="apAlert" class="d-none"></div>
+            <form id="apForm" novalidate>
+              <input type="hidden" id="apId" />
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Nama *</label
+                  ><input
+                    type="text"
+                    class="form-control"
+                    id="apNama"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email *</label
+                  ><input
+                    type="email"
+                    class="form-control"
+                    id="apEmail"
+                    required
+                  />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Nomor HP *</label
+                  ><input type="tel" class="form-control" id="apHP" required />
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Kategori *</label>
+                  <select class="form-select" id="apKategoriInput" required>
+                    <option value="">-- Pilih --</option>
+                    <option value="Putra">Putra</option>
+                    <option value="Putri">Putri</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Kamar *</label>
+                  <select class="form-select" id="apKamar" required></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Tanggal Masuk</label
+                  ><input type="date" class="form-control" id="apTanggal" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Alamat Asal</label
+                  ><textarea
+                    class="form-control"
+                    id="apAlamat"
+                    rows="2"
+                  ></textarea>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Status</label>
+                  <select class="form-select" id="apStatusInput">
+                    <option value="Aktif">Aktif</option>
+                    <option value="Nonaktif">Nonaktif</option>
+                  </select>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+            >
+              Batal
+            </button>
+            <button type="button" class="btn btn-primary" id="apSaveBtn">
+              Simpan
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <div
+        id="apToast"
+        class="toast align-items-center text-bg-success border-0"
+      >
+        <div class="d-flex">
+          <div class="toast-body" id="apToastBody"></div>
+          <button
+            type="button"
+            class="btn-close btn-close-white me-2 m-auto"
+            data-bs-dismiss="toast"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script src="../bootstrap-5.3/js/bootstrap.bundle.min.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/admin.js"></script>
+    <script>
+      (function () {
+        function toast(msg) {
+          document.getElementById("apToastBody").textContent = msg;
+          bootstrap.Toast.getOrCreateInstance(
+            document.getElementById("apToast"),
+          ).show();
+        }
+        function populateKamar(kategori, currentRoomId) {
+          var sel = document.getElementById("apKamar");
+          sel.innerHTML = '<option value="">-- Pilih Kamar --</option>';
+          DB.getRooms().forEach(function (r) {
+            if (kategori && r.kategori !== kategori) return;
+            var isFull = (r.tenantIds || []).length >= (r.kapasitas || 1);
+            var isCurrent = r.id === currentRoomId;
+            if (isFull && !isCurrent) return;
+            if (r.status === "Perbaikan" && !isCurrent) return;
+            var opt = document.createElement("option");
+            opt.value = r.id;
+            opt.textContent =
+              r.nomorKamar + " (Lantai " + r.lantai + " - " + r.kategori + ")";
+            sel.appendChild(opt);
+          });
+        }
+        function render() {
+          var tenants = DB.getTenants();
+          var s = document.getElementById("apSearch").value.toLowerCase();
+          var k = document.getElementById("apKategori").value;
+          var st = document.getElementById("apStatus").value;
+          if (s)
+            tenants = tenants.filter(function (t) {
+              var room = DB.getRoomById(t.roomId);
+              return (
+                t.nama.toLowerCase().indexOf(s) !== -1 ||
+                (room && room.nomorKamar.toLowerCase().indexOf(s) !== -1)
+              );
+            });
+          if (k)
+            tenants = tenants.filter(function (t) {
+              return t.kategori === k;
+            });
+          if (st)
+            tenants = tenants.filter(function (t) {
+              return t.status === st;
+            });
+
+          var wrap = document.getElementById("apList");
+          if (!tenants.length) {
+            wrap.innerHTML =
+              '<div class="alert alert-warning">Belum ada penghuni.</div>';
+            return;
+          }
+          var h =
+            '<div class="card"><div class="table-responsive"><table class="table table-hover mb-0"><thead><tr>' +
+            "<th>Nama</th><th>Kamar</th><th>Lantai</th><th>Kategori</th><th>Status</th><th>Kontak</th><th>Aksi</th>" +
+            "</tr></thead><tbody>";
+          tenants.forEach(function (t) {
+            var room = DB.getRoomById(t.roomId);
+            var badge = t.status === "Aktif" ? "bg-success" : "bg-secondary";
+            h +=
+              "<tr>" +
+              "<td>" +
+              AdminApp.escapeHtml(t.nama) +
+              "</td>" +
+              "<td>" +
+              AdminApp.escapeHtml(room ? room.nomorKamar : "-") +
+              "</td>" +
+              "<td>" +
+              (room ? room.lantai : "-") +
+              "</td>" +
+              "<td>" +
+              AdminApp.escapeHtml(t.kategori) +
+              "</td>" +
+              '<td><span class="badge ' +
+              badge +
+              '">' +
+              AdminApp.escapeHtml(t.status) +
+              "</span></td>" +
+              '<td class="small">' +
+              AdminApp.escapeHtml(t.nomorHP || "-") +
+              "<br>" +
+              AdminApp.escapeHtml(t.email || "-") +
+              "</td>" +
+              '<td><button class="btn btn-sm btn-outline-primary btn-edit" data-id="' +
+              AdminApp.escapeHtml(t.id) +
+              '">Edit</button></td>' +
+              "</tr>";
+          });
+          h += "</tbody></table></div></div>";
+          wrap.innerHTML = h;
+          wrap.querySelectorAll(".btn-edit").forEach(function (b) {
+            b.addEventListener("click", function () {
+              openEdit(b.getAttribute("data-id"));
+            });
+          });
+        }
+        function openEdit(id) {
+          var t = DB.getTenantById(id);
+          if (!t) return;
+          document.getElementById("apModalTitle").textContent = "Edit Penghuni";
+          document.getElementById("apId").value = t.id;
+          document.getElementById("apNama").value = t.nama;
+          document.getElementById("apEmail").value = t.email || "";
+          document.getElementById("apHP").value = t.nomorHP || "";
+          document.getElementById("apKategoriInput").value = t.kategori;
+          populateKamar(t.kategori, t.roomId);
+          document.getElementById("apKamar").value = t.roomId;
+          document.getElementById("apTanggal").value = t.tanggalMasuk || "";
+          document.getElementById("apAlamat").value = t.alamatAsal || "";
+          document.getElementById("apStatusInput").value = t.status;
+          document.getElementById("apAlert").classList.add("d-none");
+          bootstrap.Modal.getOrCreateInstance(
+            document.getElementById("apModal"),
+          ).show();
+        }
+        document
+          .getElementById("apAddBtn")
+          .addEventListener("click", function () {
+            document.getElementById("apModalTitle").textContent =
+              "Tambah Penghuni";
+            document.getElementById("apForm").reset();
+            document.getElementById("apId").value = "";
+            document.getElementById("apKategoriInput").value = "";
+            populateKamar("", "");
+            document.getElementById("apAlert").classList.add("d-none");
+            bootstrap.Modal.getOrCreateInstance(
+              document.getElementById("apModal"),
+            ).show();
+          });
+        document
+          .getElementById("apKategoriInput")
+          .addEventListener("change", function () {
+            populateKamar(this.value, "");
+          });
+        document
+          .getElementById("apSaveBtn")
+          .addEventListener("click", function () {
+            var alertBox = document.getElementById("apAlert");
+            alertBox.classList.add("d-none");
+            var id = document.getElementById("apId").value;
+            var data = {
+              nama: document.getElementById("apNama").value.trim(),
+              email: document.getElementById("apEmail").value.trim(),
+              nomorHP: document.getElementById("apHP").value.trim(),
+              kategori: document.getElementById("apKategoriInput").value,
+              roomId: document.getElementById("apKamar").value,
+              tanggalMasuk: document.getElementById("apTanggal").value,
+              alamatAsal: document.getElementById("apAlamat").value.trim(),
+              status: document.getElementById("apStatusInput").value,
+            };
+            if (!data.nama || !data.kategori || !data.roomId) {
+              alertBox.className = "alert alert-danger";
+              alertBox.textContent = "Nama, kategori, dan kamar wajib diisi.";
+              alertBox.classList.remove("d-none");
+              return;
+            }
+            var room = DB.getRoomById(data.roomId);
+            if (!room) {
+              alertBox.className = "alert alert-danger";
+              alertBox.textContent = "Kamar tidak valid.";
+              alertBox.classList.remove("d-none");
+              return;
+            }
+            if (room.kategori !== data.kategori) {
+              alertBox.className = "alert alert-danger";
+              alertBox.textContent = "Kategori kamar tidak sesuai.";
+              alertBox.classList.remove("d-none");
+              return;
+            }
+
+            var tenants = DB.getTenants();
+            var rooms = DB.getRooms();
+            if (id) {
+              var t = tenants.find(function (x) {
+                return x.id === id;
+              });
+              if (!t) return;
+              var oldRoom = rooms.find(function (r) {
+                return r.id === t.roomId;
+              });
+              if (oldRoom && oldRoom.id !== data.roomId) {
+                oldRoom.tenantIds = (oldRoom.tenantIds || []).filter(
+                  function (x) {
+                    return x !== t.id;
+                  },
+                );
+                if (
+                  oldRoom.tenantIds.length === 0 &&
+                  oldRoom.status === "Terisi"
+                )
+                  oldRoom.status = "Tersedia";
+              }
+              t.nama = data.nama;
+              t.email = data.email;
+              t.nomorHP = data.nomorHP;
+              t.kategori = data.kategori;
+              t.roomId = data.roomId;
+              t.tanggalMasuk = data.tanggalMasuk;
+              t.alamatAsal = data.alamatAsal;
+              t.status = data.status;
+              var newRoom = rooms.find(function (r) {
+                return r.id === data.roomId;
+              });
+              if (newRoom) {
+                if (!newRoom.tenantIds) newRoom.tenantIds = [];
+                if (newRoom.tenantIds.indexOf(t.id) === -1)
+                  newRoom.tenantIds.push(t.id);
+                if (data.status === "Aktif") newRoom.status = "Terisi";
+              }
+            } else {
+              var newId = DB.generateId("TEN");
+              var userId = DB.generateId("USR");
+              var users = DB.getUsers();
+              users.push({
+                id: userId,
+                username: data.nama,
+                password: "default123",
+                role: "penghuni",
+                nama: data.nama,
+                email: data.email,
+                nomorHP: data.nomorHP,
+                fotoProfil: "",
+              });
+              DB.saveUsers(users);
+              tenants.push({
+                id: newId,
+                userId: userId,
+                nama: data.nama,
+                kategori: data.kategori,
+                email: data.email,
+                nomorHP: data.nomorHP,
+                alamatAsal: data.alamatAsal,
+                fotoProfil: "",
+                roomId: data.roomId,
+                tanggalMasuk: data.tanggalMasuk,
+                status: data.status,
+              });
+              var r2 = rooms.find(function (r) {
+                return r.id === data.roomId;
+              });
+              if (r2) {
+                if (!r2.tenantIds) r2.tenantIds = [];
+                r2.tenantIds.push(newId);
+                if (data.status === "Aktif") r2.status = "Terisi";
+              }
+            }
+            if (!DB.saveTenants(tenants) || !DB.saveRooms(rooms)) {
+              alertBox.className = "alert alert-danger";
+              alertBox.textContent = "Gagal menyimpan data.";
+              alertBox.classList.remove("d-none");
+              return;
+            }
+            bootstrap.Modal.getInstance(
+              document.getElementById("apModal"),
+            ).hide();
+            toast("Data penghuni disimpan.");
+            render();
+          });
+        ["apSearch", "apKategori", "apStatus"].forEach(function (id) {
+          document.getElementById(id).addEventListener("input", render);
+          document.getElementById(id).addEventListener("change", render);
+        });
+        document.addEventListener("DOMContentLoaded", function () {
+          AdminApp.initAdminPage("penghuni.html", "Data Penghuni");
+          render();
+        });
+      })();
+    </script>
+  </body>
+</html>
